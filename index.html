@@ -351,10 +351,6 @@
         <h2>My Groups</h2>
         <button class="pill-btn" id="btn-new-group">＋ New Group</button>
       </div>
-      <div id="pending-invites-section" style="display:none;padding:12px 16px 0">
-        <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Pending Invites</div>
-        <div id="pending-invites-list"></div>
-      </div>
       <div id="groups-list" style="padding-top:12px;flex:1"></div>
     </div>
 
@@ -467,45 +463,28 @@
 
 <!-- Invite Member -->
 <div class="modal-overlay" id="modal-invite">
-  <div class="modal">
+  <div class="modal" style="text-align:center">
     <div class="modal-handle"></div>
-    <div class="modal-title">📨 Invite Member</div>
-
-    <!-- Step 1: email entry -->
-    <div id="invite-step-1">
-      <div class="form-group">
-        <label>Their Email Address</label>
-        <input type="email" id="invite-email" placeholder="friend@email.com" />
-        <div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">
-          This links the invite to their account when they sign in.
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-action cancel" onclick="closeModal('modal-invite')">Cancel</button>
-        <button class="btn-action primary" id="btn-send-invite">Send Invite</button>
-      </div>
+    <div class="modal-title" style="text-align:left">📨 Invite to Group</div>
+    <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:20px;line-height:1.6;text-align:left">
+      Share the invite link below. When your friend opens it and signs in with Google they'll join automatically — no email address needed.
     </div>
-
-    <!-- Step 2: share via WhatsApp -->
-    <div id="invite-step-2" style="display:none;text-align:center">
-      <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
-      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Invite recorded!</div>
-      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:20px;line-height:1.5">
-        Now let them know via WhatsApp so they can open the app and accept.
-      </div>
-      <button id="btn-whatsapp-share" style="
-        display:flex;align-items:center;justify-content:center;gap:10px;
-        width:100%;padding:14px;border:none;border-radius:14px;
-        background:#25D366;color:#fff;font-family:'Cabin',sans-serif;
-        font-weight:700;font-size:1rem;cursor:pointer;
-        box-shadow:0 3px 12px rgba(37,211,102,.4);margin-bottom:12px">
-        <svg width="22" height="22" viewBox="0 0 32 32" fill="#fff">
-          <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.668 4.61 1.832 6.5L4 29l7.75-1.812A11.94 11.94 0 0016 28c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.94 9.94 0 01-5.02-1.352l-.36-.213-4.6 1.076 1.1-4.47-.236-.373A9.953 9.953 0 016 15c0-5.523 4.477-10 10-10zm-3.938 5.5c-.2 0-.524.075-.8.375-.275.3-1.05 1.025-1.05 2.5s1.075 2.9 1.225 3.1c.15.2 2.1 3.2 5.125 4.35 2.525.975 3.025.8 3.575.75.55-.05 1.775-.725 2.025-1.425.25-.7.25-1.3.175-1.425-.075-.125-.275-.2-.575-.35-.3-.15-1.775-.875-2.05-.975-.275-.1-.475-.15-.675.15-.2.3-.775.975-.95 1.175-.175.2-.35.225-.65.075-.3-.15-1.265-.466-2.41-1.485-.89-.793-1.49-1.77-1.665-2.07-.175-.3-.018-.462.132-.61.134-.134.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.675-1.625-.925-2.225-.243-.585-.49-.505-.675-.514l-.575-.01z"/>
-        </svg>
-        Share via WhatsApp
-      </button>
-      <button class="btn-action cancel" style="width:100%" onclick="closeModal('modal-invite');resetInviteModal()">Done</button>
-    </div>
+    <div id="invite-link-box" style="
+      background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;
+      padding:10px 12px;font-size:.78rem;word-break:break-all;color:var(--text-muted);
+      text-align:left;margin-bottom:16px;line-height:1.5"></div>
+    <button id="btn-whatsapp-share" style="
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      width:100%;padding:14px;border:none;border-radius:14px;
+      background:#25D366;color:#fff;font-family:'Cabin',sans-serif;
+      font-weight:700;font-size:1rem;cursor:pointer;
+      box-shadow:0 3px 12px rgba(37,211,102,.4);margin-bottom:10px">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="#fff">
+        <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.668 4.61 1.832 6.5L4 29l7.75-1.812A11.94 11.94 0 0016 28c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.94 9.94 0 01-5.02-1.352l-.36-.213-4.6 1.076 1.1-4.47-.236-.373A9.953 9.953 0 016 15c0-5.523 4.477-10 10-10zm-3.938 5.5c-.2 0-.524.075-.8.375-.275.3-1.05 1.025-1.05 2.5s1.075 2.9 1.225 3.1c.15.2 2.1 3.2 5.125 4.35 2.525.975 3.025.8 3.575.75.55-.05 1.775-.725 2.025-1.425.25-.7.25-1.3.175-1.425-.075-.125-.275-.2-.575-.35-.3-.15-1.775-.875-2.05-.975-.275-.1-.475-.15-.675.15-.2.3-.775.975-.95 1.175-.175.2-.35.225-.65.075-.3-.15-1.265-.466-2.41-1.485-.89-.793-1.49-1.77-1.665-2.07-.175-.3-.018-.462.132-.61.134-.134.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.675-1.625-.925-2.225-.243-.585-.49-.505-.675-.514l-.575-.01z"/>
+      </svg>
+      Share via WhatsApp
+    </button>
+    <button class="btn-action cancel" style="width:100%" onclick="closeModal('modal-invite')">Close</button>
   </div>
 </div>
 
@@ -878,10 +857,7 @@ function renderGroups(groups) {
 
     card.querySelector('[data-inv]')?.addEventListener('click', e => {
       e.stopPropagation();
-      inviteGroupId = g.id;
-      document.getElementById('invite-email').value = '';
-      resetInviteModal();
-      openModal('modal-invite');
+      openInviteModal(g.id);
     });
 
     card.querySelector('[data-del]')?.addEventListener('click', async e => {
@@ -922,87 +898,86 @@ document.getElementById('btn-create-group').addEventListener('click', async () =
 });
 
 // ── Invites ───────────────────────────────────────────────────
-function subscribeInvites() {
-  loadInvites();
-  invitesChannel = sb.channel('inv-rt')
-    .on('postgres_changes', { event:'*', schema:'public', table:'invites' }, loadInvites)
-    .subscribe();
+// ── Invites — link-based, no email needed ─────────────────────
+
+/** Generate a short random invite code */
+function genCode() {
+  return Math.random().toString(36).slice(2, 9) +
+         Math.random().toString(36).slice(2, 9);
 }
 
-async function loadInvites() {
-  const { data } = await sb.from('invites').select('*')
-    .eq('to_email', currentUser.email).eq('status', 'pending');
-  renderInvites(data||[]);
-}
-
-function renderInvites(invites) {
-  const section = document.getElementById('pending-invites-section');
-  const list    = document.getElementById('pending-invites-list');
-  list.innerHTML = '';
-  section.style.display = invites.length ? 'block' : 'none';
-
-  invites.forEach(inv => {
-    const row = document.createElement('div');
-    row.className = 'invite-accept-row';
-    row.innerHTML = `
-      <span class="accept-name">Join "<strong>${esc(inv.group_name)}</strong>"</span>
-      <button class="accept-btn">Accept</button>
-      <button class="decline-btn">Decline</button>
-    `;
-    row.querySelector('.accept-btn').addEventListener('click', async () => {
-      await sb.from('group_members').insert({ group_id:inv.group_id, user_id:currentUser.id });
-      await sb.from('invites').update({ status:'accepted' }).eq('id', inv.id);
-      showToast('You joined the group! 🎉');
-    });
-    row.querySelector('.decline-btn').addEventListener('click', async () => {
-      await sb.from('invites').update({ status:'declined' }).eq('id', inv.id);
-      showToast('Invite declined.');
-    });
-    list.appendChild(row);
-  });
-}
-
-function resetInviteModal() {
-  document.getElementById('invite-step-1').style.display = 'block';
-  document.getElementById('invite-step-2').style.display = 'none';
-  document.getElementById('invite-email').value = '';
-}
-
-document.getElementById('btn-send-invite').addEventListener('click', async () => {
-  const email = document.getElementById('invite-email').value.trim().toLowerCase();
-  if (!email || !inviteGroupId) return;
-
-  const { data: exists } = await sb.from('invites').select('id')
-    .eq('group_id', inviteGroupId).eq('to_email', email).eq('status','pending').maybeSingle();
-  if (exists) return showToast('An invite was already sent to that email.');
-
-  const { data: grp } = await sb.from('groups').select('name').eq('id', inviteGroupId).single();
-  const groupName = grp?.name || 'our group';
+/** Called when owner taps Invite — generates code, saves to DB, opens modal */
+async function openInviteModal(groupId) {
+  inviteGroupId = groupId;
+  const { data: grp } = await sb.from('groups').select('name').eq('id', groupId).single();
+  const groupName  = grp?.name || 'our group';
   const senderName = currentProfile?.display_name || currentUser.email;
+  const code       = genCode();
 
+  // Save invite code to DB (no email — anyone with the link can join)
   await sb.from('invites').insert({
-    group_id:   inviteGroupId,
+    group_id:   groupId,
     group_name: groupName,
     from_id:    currentUser.id,
     from_name:  senderName,
-    to_email:   email,
+    code:       code,
     status:     'pending'
   });
 
-  // Build WhatsApp message
-  const appUrl = 'https://ms4x4.github.io/all-things-camp/';
-  const msg = `Hey! ${senderName} invited you to join "${groupName}" on All Things Camp 🏕️\n\nOpen the app, sign in with your Google account (${email}) and you'll see the invite waiting for you:\n${appUrl}`;
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  const appUrl = `https://ms4x4.github.io/all-things-camp/?invite=${code}`;
+  const msg    = `Hey! ${senderName} invited you to join "${groupName}" on All Things Camp 🏕️\n\nJust tap the link, sign in with Google and you'll join automatically:\n${appUrl}`;
+  const waUrl  = `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-  // Wire up the WhatsApp button
-  document.getElementById('btn-whatsapp-share').onclick = () => {
-    window.open(waUrl, '_blank');
-  };
+  // Show invite link in the box
+  document.getElementById('invite-link-box').textContent = appUrl;
 
-  // Show step 2
-  document.getElementById('invite-step-1').style.display = 'none';
-  document.getElementById('invite-step-2').style.display = 'block';
-});
+  // Wire up WhatsApp button
+  document.getElementById('btn-whatsapp-share').onclick = () => window.open(waUrl, '_blank');
+
+  openModal('modal-invite');
+}
+
+/** On login, check URL for ?invite=CODE and auto-join if found */
+async function checkInviteCode() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('invite');
+  if (!code) return;
+
+  // Look up the invite
+  const { data: inv } = await sb.from('invites')
+    .select('*').eq('code', code).eq('status', 'pending').maybeSingle();
+
+  if (!inv) {
+    showToast('Invite link has already been used or expired.');
+    // Clean up URL
+    window.history.replaceState({}, '', window.location.pathname);
+    return;
+  }
+
+  // Check not already a member
+  const { data: already } = await sb.from('group_members')
+    .select('id').eq('group_id', inv.group_id).eq('user_id', currentUser.id).maybeSingle();
+
+  if (already) {
+    showToast(`You're already in "${inv.group_name}"!`);
+  } else {
+    // Join the group
+    await sb.from('group_members').insert({ group_id: inv.group_id, user_id: currentUser.id });
+    // Mark invite used
+    await sb.from('invites').update({ status: 'accepted', accepted_by: currentUser.id })
+      .eq('id', inv.id);
+    showToast(`You joined "${inv.group_name}"! 🎉`);
+  }
+
+  // Remove ?invite= from the URL so it doesn't re-trigger on refresh
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+// Invites are now code-based — no real-time subscription needed
+function subscribeInvites() {
+  checkInviteCode();
+}
+
 
 // ============================================================
 // MAP — Leaflet + OpenStreetMap + Nominatim (all free)
