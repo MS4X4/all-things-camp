@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a2e1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>All Things Camp</title>
+
+  <!-- ============================================================
+       EXTERNAL DEPENDENCIES — zero Google, zero paid services
+       Bunny Fonts  : free privacy-respecting font CDN (not Google)
+       Leaflet.js   : open-source map interaction
+       Supabase JS  : open-source auth + database (free tier, no card)
+       OpenStreetMap: free map tiles
+       Nominatim    : free geocoding
+  ============================================================ -->
+  <link rel="preconnect" href="https://fonts.bunny.net" />
+  <link href="https://fonts.bunny.net/css?family=cabin:400,400i,600,700|playfair-display:700,900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* ── Theme variables ─────────────────────────────────── */
+    :root {
+      --bg:#f4f0e8; --bg-card:#fdf9f2; --bg-surface:#ece7dc;
+      --border:#c8bfa8; --text:#1c1c14; --text-muted:#6b6050;
+      --accent:#2d5a1b; --accent-light:#4a8a30; --accent-warm:#c4601a;
+      --tab-bg:#e5dfd4; --shadow:rgba(0,0,0,0.12);
+      --danger:#b83232; --star:#d4a017; --input-bg:#fff;
+      --overlay:rgba(28,28,20,0.55);
+    }
+    [data-theme="dark"] {
+      --bg:#111810; --bg-card:#1a2218; --bg-surface:#222d20;
+      --border:#3a4a36; --text:#e8e4d8; --text-muted:#8a9a84;
+      --accent:#6ab84a; --accent-light:#8ed46a; --accent-warm:#e07840;
+      --tab-bg:#1a2218; --shadow:rgba(0,0,0,0.4);
+      --danger:#e05050; --star:#e8b830; --input-bg:#1a2218;
+      --overlay:rgba(10,14,10,0.7);
+    }
+
+    /* ── Reset & base ────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:'Cabin',sans-serif;background:var(--bg);
+      color:var(--text);overflow:hidden;-webkit-tap-highlight-color:transparent}
+
+    /* ── App shell ───────────────────────────────────────── */
+    #app{display:flex;flex-direction:column;height:100dvh;max-width:480px;
+      margin:0 auto;position:relative;overflow:hidden;background:var(--bg);
+      box-shadow:0 0 60px var(--shadow)}
+
+    /* ── Header ──────────────────────────────────────────── */
+    .app-header{flex-shrink:0;background:var(--accent);color:#fff;
+      padding:14px 16px 10px;display:flex;align-items:center;
+      justify-content:space-between;min-height:56px;position:relative;z-index:10}
+    .app-header h1{font-family:'Playfair Display',serif;font-size:1.3rem;
+      font-weight:900;letter-spacing:.01em;line-height:1}
+    .app-header .subtitle{font-size:.65rem;opacity:.75;letter-spacing:.12em;
+      text-transform:uppercase;margin-top:2px}
+
+    /* ── Pages ───────────────────────────────────────────── */
+    .pages{flex:1;position:relative;overflow:hidden}
+    .page{position:absolute;inset:0;overflow-y:auto;display:none;
+      flex-direction:column;-webkit-overflow-scrolling:touch}
+    .page.active{display:flex}
+
+    /* ── Tab bar ─────────────────────────────────────────── */
+    .tab-bar{flex-shrink:0;background:var(--tab-bg);border-top:1px solid var(--border);
+      display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom,0)}
+    .tab-item{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:8px 4px;cursor:pointer;border:none;
+      background:none;color:var(--text-muted);font-family:'Cabin',sans-serif;
+      font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+      gap:4px;transition:color .2s}
+    .tab-item .ti{font-size:1.4rem}
+    .tab-item.active{color:var(--accent)}
+
+    /* ── Login page ──────────────────────────────────────── */
+    #login-page{position:fixed;inset:0;background:var(--accent);display:flex;
+      flex-direction:column;align-items:center;justify-content:center;
+      z-index:1000;padding:32px 24px}
+    #login-page.hidden{display:none}
+    .login-logo{font-size:3.5rem;margin-bottom:12px}
+    .login-title{font-family:'Playfair Display',serif;font-size:2.2rem;
+      font-weight:900;color:#fff;text-align:center;line-height:1.1}
+    .login-tagline{color:rgba(255,255,255,.65);font-size:.8rem;
+      letter-spacing:.15em;text-transform:uppercase;margin:8px 0 36px}
+    .login-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+      border-radius:16px;padding:24px;width:100%;max-width:340px;
+      display:flex;flex-direction:column;gap:12px}
+    .login-card input{width:100%;padding:12px 14px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);
+      color:#fff;font-family:'Cabin',sans-serif;font-size:.95rem}
+    .login-card input::placeholder{color:rgba(255,255,255,.5)}
+    .login-card input:focus{outline:none;border-color:rgba(255,255,255,.6)}
+    .btn-primary{background:#fff;color:var(--accent);border:none;border-radius:10px;
+      padding:13px 20px;font-family:'Cabin',sans-serif;font-weight:700;
+      font-size:.95rem;cursor:pointer;width:100%;transition:opacity .2s}
+    .btn-primary:hover{opacity:.92}
+    .login-toggle{text-align:center;color:rgba(255,255,255,.65);font-size:.82rem}
+    .login-toggle span{color:#fff;font-weight:700;cursor:pointer;text-decoration:underline}
+    .auth-error{color:#ffcccc;font-size:.82rem;text-align:center;min-height:1.2em}
+
+    /* ── Common components ───────────────────────────────── */
+    .section-bar{background:var(--bg-surface);border-bottom:1px solid var(--border);
+      padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
+      flex-shrink:0;position:sticky;top:0;z-index:5}
+    .section-bar h2{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700}
+    .pill-btn{background:var(--accent);color:#fff;border:none;border-radius:20px;
+      padding:6px 14px;font-family:'Cabin',sans-serif;font-size:.78rem;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .2s}
+    .pill-btn:hover{background:var(--accent-light)}
+    .pill-btn.danger{background:var(--danger)}
+    .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:10px;padding:40px 24px;text-align:center;color:var(--text-muted)}
+    .empty-state .empty-icon{font-size:3rem}
+    .empty-state p{font-size:.88rem;line-height:1.5}
+    .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:20px;
+      padding:2px 10px;font-size:.72rem;font-weight:700}
+    .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+    .form-group label{font-size:.78rem;font-weight:700;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.07em}
+    .form-group input,.form-group select,.form-group textarea{
+      background:var(--input-bg);border:1px solid var(--border);border-radius:10px;
+      padding:10px 12px;font-family:'Cabin',sans-serif;font-size:.92rem;
+      color:var(--text);width:100%}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+      outline:none;border-color:var(--accent)}
+
+    /* ── Bottom sheet modal ──────────────────────────────── */
+    .modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:500;
+      display:flex;align-items:flex-end;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .25s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-card);border-radius:20px 20px 0 0;width:100%;
+      max-width:480px;max-height:88dvh;overflow-y:auto;padding:24px 20px 40px;
+      transform:translateY(40px);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+    .modal-overlay.open .modal{transform:translateY(0)}
+    .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;
+      margin:0 auto 20px}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;
+      font-weight:700;margin-bottom:20px}
+    .modal-footer{display:flex;gap:10px;margin-top:16px}
+    .btn-action{flex:1;padding:13px;border-radius:12px;border:none;
+      font-family:'Cabin',sans-serif;font-weight:700;font-size:.92rem;
+      cursor:pointer;transition:opacity .2s}
+    .btn-action:hover{opacity:.85}
+    .btn-action.primary{background:var(--accent);color:#fff}
+    .btn-action.cancel{background:var(--bg-surface);color:var(--text)}
+
+    /* ── Group cards ─────────────────────────────────────── */
+    .group-card{background:var(--bg-card);border:1px solid var(--border);
+      border-radius:14px;margin:0 16px 10px;overflow:hidden}
+    .group-card-header{padding:14px 16px;display:flex;align-items:center;
+      gap:12px;cursor:pointer}
+    .group-avatar{width:44px;height:44px;border-radius:12px;background:var(--accent);
+      display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+    .group-name{font-weight:700;font-size:.98rem}
+    .group-meta{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+    .group-chevron{font-size:1rem;color:var(--text-muted);transition:transform .25s;margin-left:auto}
+    .group-card.expanded .group-chevron{transform:rotate(90deg)}
+    .group-card-body{border-top:1px solid var(--border);padding:14px 16px;
+      display:none;flex-direction:column;gap:8px}
+    .group-card.expanded .group-card-body{display:flex}
+    .member-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:.88rem}
+    .member-avatar{width:30px;height:30px;border-radius:50%;background:var(--bg-surface);
+      border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+      font-size:.85rem;flex-shrink:0;font-weight:700}
+    .group-actions{display:flex;gap:8px;flex-wrap:wrap;padding-top:6px}
+    .invite-accept-row{background:var(--bg-surface);border-radius:10px;padding:10px 12px;
+      display:flex;align-items:center;gap:10px;font-size:.85rem;margin-bottom:8px}
+    .invite-accept-row .accept-name{flex:1;font-weight:600}
+    .accept-btn{padding:5px 14px;background:var(--accent);color:#fff;border:none;
+      border-radius:8px;font-family:'Cabin',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer}
+    .decline-btn{padding:5px 14px;background:transparent;color:var(--danger);
+      border:1px solid var(--danger);border-radius:8px;font-family:'Cabin',sans-serif;
+      font-size:.78rem;font-weight:700;cursor:pointer}
+
+    /* ── Map page ────────────────────────────────────────── */
+    #page-map{position:relative;overflow:hidden}
+    #map-container{position:absolute;inset:0;z-index:1}
+    .map-header{position:absolute;top:0;left:0;right:0;z-index:400;
+      padding:10px 12px;display:flex;gap:8px;align-items:center;pointer-events:none}
+    .map-header>*{pointer-events:all}
+    .group-select-wrap{background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;display:flex;align-items:center;padding:0 12px;gap:6px;
+      flex:1;box-shadow:0 2px 8px var(--shadow)}
+    .group-select-wrap select{border:none;background:transparent;
+      font-family:'Cabin',sans-serif;font-size:.88rem;font-weight:600;
+      color:var(--text);padding:10px 0;flex:1;cursor:pointer}
+    .group-select-wrap select:focus{outline:none}
+    .map-search-btn{background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;width:42px;height:42px;display:flex;align-items:center;
+      justify-content:center;cursor:pointer;font-size:1.1rem;color:var(--text);
+      box-shadow:0 2px 8px var(--shadow);flex-shrink:0}
+    .map-search-panel{position:absolute;top:62px;left:12px;right:12px;z-index:400;
+      background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+      box-shadow:0 4px 16px var(--shadow);display:none}
+    .map-search-panel.open{display:block}
+    .map-search-panel input{width:100%;border:none;background:transparent;
+      padding:13px 16px;font-family:'Cabin',sans-serif;font-size:.92rem;
+      color:var(--text);border-radius:14px}
+    .map-search-panel input:focus{outline:none}
+    .search-results{border-top:1px solid var(--border);max-height:220px;overflow-y:auto}
+    .search-result-item{padding:11px 16px;cursor:pointer;font-size:.88rem;
+      border-bottom:1px solid var(--border);transition:background .15s}
+    .search-result-item:last-child{border-bottom:none}
+    .search-result-item:hover{background:var(--bg-surface)}
+    .search-result-item strong{display:block;font-size:.92rem}
+    .search-result-item span{color:var(--text-muted);font-size:.78rem}
+
+    /* ── Pin modal tabs ──────────────────────────────────── */
+    .pin-modal-tabs{display:flex;border-bottom:1px solid var(--border);
+      margin:0 -20px 16px;padding:0 20px}
+    .pin-tab-btn{flex:1;padding:10px 4px;text-align:center;font-size:.82rem;
+      font-weight:700;color:var(--text-muted);border:none;background:none;
+      cursor:pointer;border-bottom:2px solid transparent;
+      transition:color .2s,border-color .2s;font-family:'Cabin',sans-serif;letter-spacing:.04em}
+    .pin-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .pin-tab-panel{display:none}
+    .pin-tab-panel.active{display:block}
+
+    /* ── Chat ────────────────────────────────────────────── */
+    .chat-messages{max-height:220px;overflow-y:auto;display:flex;
+      flex-direction:column;gap:10px;margin-bottom:12px}
+    .chat-bubble{padding:9px 12px;border-radius:12px;font-size:.85rem;
+      max-width:88%;line-height:1.4}
+    .chat-bubble.mine{background:var(--accent);color:#fff;align-self:flex-end;
+      border-bottom-right-radius:4px}
+    .chat-bubble.theirs{background:var(--bg-surface);color:var(--text);
+      align-self:flex-start;border-bottom-left-radius:4px}
+    .chat-bubble .bubble-author{font-size:.72rem;font-weight:700;margin-bottom:3px;opacity:.75}
+    .chat-input-row{display:flex;gap:8px}
+    .chat-input-row input{flex:1;background:var(--input-bg);border:1px solid var(--border);
+      border-radius:10px;padding:10px 12px;font-family:'Cabin',sans-serif;
+      font-size:.88rem;color:var(--text)}
+    .chat-input-row input:focus{outline:none;border-color:var(--accent)}
+    .chat-send-btn{background:var(--accent);border:none;border-radius:10px;
+      width:40px;color:#fff;cursor:pointer;font-size:1.1rem}
+
+    /* ── Ratings ─────────────────────────────────────────── */
+    .rating-stars{display:flex;gap:8px;margin:12px 0}
+    .rating-star{font-size:2rem;cursor:pointer;color:var(--border);
+      transition:color .15s,transform .15s}
+    .rating-star.active,.rating-star:hover{color:var(--star);transform:scale(1.15)}
+    .rating-summary{background:var(--bg-surface);border-radius:12px;
+      padding:12px;font-size:.85rem;display:flex;flex-direction:column;gap:4px}
+    .rating-avg{font-size:1.4rem;font-weight:700;color:var(--star)}
+
+    /* ── Settings page ───────────────────────────────────── */
+    .profile-banner{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-light) 100%);
+      margin:16px;border-radius:16px;padding:20px;display:flex;align-items:center;
+      gap:14px;color:#fff}
+    .profile-avatar-large{width:54px;height:54px;border-radius:16px;
+      background:rgba(255,255,255,.2);display:flex;align-items:center;
+      justify-content:center;font-size:1.8rem;flex-shrink:0}
+    .profile-name{font-size:1.1rem;font-weight:700}
+    .profile-email{font-size:.78rem;opacity:.75;margin-top:2px}
+    .settings-section{margin:16px 16px 0}
+    .settings-section-title{font-size:.72rem;font-weight:700;color:var(--text-muted);
+      text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;padding-left:4px}
+    .settings-card{background:var(--bg-card);border:1px solid var(--border);
+      border-radius:14px;overflow:hidden}
+    .settings-row{display:flex;align-items:center;gap:14px;padding:15px 16px;
+      cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+    .settings-row:last-child{border-bottom:none}
+    .settings-row:hover{background:var(--bg-surface)}
+    .settings-icon{width:38px;height:38px;border-radius:10px;display:flex;
+      align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+    .settings-row-text{flex:1}
+    .settings-row-label{font-weight:600;font-size:.95rem}
+    .settings-row-sub{font-size:.78rem;color:var(--text-muted);margin-top:1px}
+    .settings-row-arrow{color:var(--text-muted);font-size:.9rem}
+    .theme-toggle-row{display:flex;align-items:center;gap:12px;padding:15px 16px}
+    .theme-chips{display:flex;gap:8px}
+    .theme-chip{padding:7px 18px;border-radius:20px;border:1.5px solid var(--border);
+      font-family:'Cabin',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;
+      background:transparent;color:var(--text-muted);transition:all .2s}
+    .theme-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+    /* ── Loading / toast ─────────────────────────────────── */
+    .spinner{width:22px;height:22px;border:3px solid var(--border);
+      border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+    .loading-overlay.hidden{display:none}
+    #toast{position:fixed;bottom:80px;left:50%;
+      transform:translateX(-50%) translateY(20px);background:#1c1c14;color:#fff;
+      padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;
+      z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+      white-space:nowrap;max-width:calc(100% - 40px);text-align:center}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .divider{height:1px;background:var(--border);margin:8px 0}
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div style="font-size:3rem">🏕️</div>
+  <div class="spinner"></div>
+  <div style="color:var(--text-muted);font-size:.82rem">Setting up camp…</div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── Login ─────────────────────────────────────────────── -->
+<div id="login-page" class="hidden">
+  <div class="login-logo">🏕️</div>
+  <div class="login-title">All Things Camp</div>
+  <div class="login-tagline">Adventure starts here</div>
+  <div class="login-card">
+    <div class="auth-error" id="auth-error"></div>
+    <input type="text"     id="auth-name"     placeholder="Your name"     style="display:none" />
+    <input type="email"    id="auth-email"    placeholder="Email address" autocomplete="email" />
+    <input type="password" id="auth-password" placeholder="Password"      autocomplete="current-password" />
+    <button class="btn-primary" id="auth-submit-btn">Sign In</button>
+    <div class="login-toggle" id="auth-toggle-text">
+      New here? <span id="auth-toggle-link">Create an account</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── App shell ──────────────────────────────────────────── -->
+<div id="app" style="display:none">
+
+  <header class="app-header">
+    <div>
+      <h1>🏕️ All Things Camp</h1>
+      <div class="subtitle" id="header-subtitle">Fireside Friends</div>
+    </div>
+  </header>
+
+  <div class="pages">
+
+    <!-- Page 1: Fireside Friends -->
+    <div class="page active" id="page-friends">
+      <div class="section-bar">
+        <h2>My Groups</h2>
+        <button class="pill-btn" id="btn-new-group">＋ New Group</button>
+      </div>
+      <div id="pending-invites-section" style="display:none;padding:12px 16px 0">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Pending Invites</div>
+        <div id="pending-invites-list"></div>
+      </div>
+      <div id="groups-list" style="padding-top:12px;flex:1"></div>
+    </div>
+
+    <!-- Page 2: Camping Compass -->
+    <div class="page" id="page-map">
+      <div id="map-container"></div>
+      <div class="map-header">
+        <div class="group-select-wrap">
+          <span>🏕</span>
+          <select id="map-group-select"><option value="">— No Group Selected —</option></select>
+        </div>
+        <button class="map-search-btn" id="map-search-toggle">🔍</button>
+      </div>
+      <div class="map-search-panel" id="map-search-panel">
+        <input type="text" id="map-search-input" placeholder="Search for a location…" autocomplete="off" />
+        <div class="search-results" id="map-search-results"></div>
+      </div>
+    </div>
+
+    <!-- Page 3: Basecamp Basics -->
+    <div class="page" id="page-settings">
+      <div class="profile-banner">
+        <div class="profile-avatar-large" id="settings-avatar">👤</div>
+        <div>
+          <div class="profile-name" id="settings-display-name">Camper</div>
+          <div class="profile-email" id="settings-email">—</div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Account</div>
+        <div class="settings-card">
+          <div class="settings-row" id="row-profile">
+            <div class="settings-icon" style="background:#e8f4e0">👤</div>
+            <div class="settings-row-text">
+              <div class="settings-row-label">User Profile</div>
+              <div class="settings-row-sub">Update your display name</div>
+            </div>
+            <div class="settings-row-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">Preferences</div>
+        <div class="settings-card">
+          <div class="theme-toggle-row">
+            <div class="settings-icon" style="background:#fef3e2">🌓</div>
+            <div class="settings-row-text"><div class="settings-row-label">Theme</div></div>
+            <div class="theme-chips">
+              <button class="theme-chip active" id="theme-light-btn">☀️ Light</button>
+              <button class="theme-chip"        id="theme-dark-btn">🌙 Dark</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section" style="margin-bottom:24px">
+        <div class="settings-section-title">Session</div>
+        <div class="settings-card">
+          <div class="settings-row" id="row-logout">
+            <div class="settings-icon" style="background:#fde8e8">🚪</div>
+            <div class="settings-row-text">
+              <div class="settings-row-label" style="color:var(--danger)">Logout</div>
+              <div class="settings-row-sub">Sign out and close the app</div>
+            </div>
+            <div class="settings-row-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:var(--text-muted);padding-bottom:16px">
+        All Things Camp · v1.0.0 · Supabase + OpenStreetMap
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="tab-bar">
+    <button class="tab-item active" data-page="friends" id="tab-friends">
+      <span class="ti">🔥</span><span>Fireside</span>
+    </button>
+    <button class="tab-item" data-page="map" id="tab-map">
+      <span class="ti">🧭</span><span>Compass</span>
+    </button>
+    <button class="tab-item" data-page="settings" id="tab-settings">
+      <span class="ti">⛺</span><span>Basecamp</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ── Modals ─────────────────────────────────────────────── -->
+
+<!-- New Group -->
+<div class="modal-overlay" id="modal-new-group">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🏕 Create New Group</div>
+    <div class="form-group">
+      <label>Group Name</label>
+      <input type="text" id="new-group-name" placeholder="e.g. Weekend Warriors" maxlength="40" />
+    </div>
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <input type="text" id="new-group-desc" placeholder="What's this group about?" maxlength="100" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action cancel" onclick="closeModal('modal-new-group')">Cancel</button>
+      <button class="btn-action primary" id="btn-create-group">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Member -->
+<div class="modal-overlay" id="modal-invite">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📨 Invite Member</div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="invite-email" placeholder="friend@email.com" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action cancel" onclick="closeModal('modal-invite')">Cancel</button>
+      <button class="btn-action primary" id="btn-send-invite">Send Invite</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">👤 Edit Profile</div>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="profile-name-input" placeholder="Your name" maxlength="40" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action cancel" onclick="closeModal('modal-profile')">Cancel</button>
+      <button class="btn-action primary" id="btn-save-profile">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pin Detail -->
+<div class="modal-overlay" id="modal-pin">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="pin-modal-title">📍 Location</div>
+    <div class="pin-modal-tabs">
+      <button class="pin-tab-btn active" data-pintab="info">Info</button>
+      <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
+      <button class="pin-tab-btn"        data-pintab="rating">Rating</button>
+    </div>
+    <!-- Info tab -->
+    <div class="pin-tab-panel active" id="pintab-info">
+      <div class="form-group">
+        <label>Name <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="pin-name" placeholder="Name this spot" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label>CampMaster</label>
+        <select id="pin-campmaster"></select>
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" id="pin-address" placeholder="Auto-detected" readonly />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="pin-status">
+          <option value="Maybe">Maybe</option>
+          <option value="Planned">Planned</option>
+          <option value="Booked">Booked</option>
+          <option value="Paid">Paid</option>
+          <option value="Been There">Been There</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action cancel" id="btn-delete-pin" style="background:var(--danger);color:#fff;flex:0 0 auto;padding:13px 18px">🗑</button>
+        <button class="btn-action cancel" onclick="closeModal('modal-pin')">Cancel</button>
+        <button class="btn-action primary" id="btn-save-pin">Save Pin</button>
+      </div>
+    </div>
+    <!-- Chat tab -->
+    <div class="pin-tab-panel" id="pintab-chat">
+      <div class="chat-messages" id="pin-chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="pin-chat-input" placeholder="Say something…" maxlength="300" />
+        <button class="chat-send-btn" id="pin-chat-send">➤</button>
+      </div>
+    </div>
+    <!-- Rating tab -->
+    <div class="pin-tab-panel" id="pintab-rating">
+      <div id="rating-locked-msg" style="color:var(--text-muted);font-size:.88rem;margin-bottom:12px">
+        Ratings are only available once status is "Been There".
+      </div>
+      <div id="rating-content" style="display:none">
+        <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:8px">Your Rating</div>
+        <div class="rating-stars" id="rating-stars-input">
+          <span class="rating-star" data-val="1">★</span>
+          <span class="rating-star" data-val="2">★</span>
+          <span class="rating-star" data-val="3">★</span>
+          <span class="rating-star" data-val="4">★</span>
+          <span class="rating-star" data-val="5">★</span>
+        </div>
+        <button class="btn-action primary" id="btn-submit-rating" style="margin-bottom:16px">Submit Rating</button>
+        <div class="rating-summary" id="rating-summary"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scripts ────────────────────────────────────────────── -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+// ============================================================
+// SUPABASE CONFIGURATION
+// ⚠️  Replace these two values with your own project credentials.
+//     supabase.com → Project Settings → API
+//     Free tier: no credit card required, not Google.
+// ============================================================
+const SUPABASE_URL = 'https://vfidmdmqlgskfygxwmtj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmaWRtZG1xbGdza2Z5Z3h3bXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzEwMDEsImV4cCI6MjA4OTUwNzAwMX0.eddfe8obhGjLT3eB2r0n_AtGJtFKBzKIFyzfLQUX2pg';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser     = null;   // Supabase auth user
+let currentProfile  = null;   // Row from `profiles` table
+let selectedGroupId = null;   // Active group on the map
+let currentPinId    = null;   // Pin being edited/viewed
+let selectedRating  = 0;      // Current star rating value
+let inviteGroupId   = null;   // Group context for the invite modal
+let pinMarkers      = {};     // { pinId: leafletMarker }
+let leafletMap      = null;
+let mapInitialized  = false;
+
+// Real-time channel handles (kept for cleanup on logout)
+let groupsChannel   = null;
+let invitesChannel  = null;
+let pinsChannel     = null;
+let chatChannel     = null;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+/** Display a brief toast notification */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+window.openModal  = id => document.getElementById(id).classList.add('open');
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+
+/** Escape HTML — prevents XSS when inserting user content */
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Theme ─────────────────────────────────────────────────────
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='dark' ? 'dark' : '');
+  document.getElementById('theme-light-btn').classList.toggle('active', t!=='dark');
+  document.getElementById('theme-dark-btn').classList.toggle('active',  t==='dark');
+  localStorage.setItem('atc-theme', t);
+}
+(function(){ const s=localStorage.getItem('atc-theme'); if(s) applyTheme(s); })();
+document.getElementById('theme-light-btn').addEventListener('click', () => applyTheme('light'));
+document.getElementById('theme-dark-btn').addEventListener('click',  () => applyTheme('dark'));
+
+// ── Page navigation ───────────────────────────────────────────
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('tab-'+page).classList.add('active');
+  document.getElementById('header-subtitle').textContent =
+    {friends:'Fireside Friends', map:'Camping Compass', settings:'Basecamp Basics'}[page] || '';
+
+  if (page==='map' && !mapInitialized) { initMap(); mapInitialized=true; }
+  if (page==='map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+  if (page==='settings') refreshSettingsUI();
+}
+
+document.querySelectorAll('.tab-item').forEach(btn =>
+  btn.addEventListener('click', () => navigateTo(btn.dataset.page))
+);
+
+// ============================================================
+// AUTH
+// Supabase persists the session in localStorage by default —
+// returning users are signed in automatically without needing
+// to log in again (auth state persistence built-in).
+// ============================================================
+sb.auth.onAuthStateChange(async (event, session) => {
+  document.getElementById('loading-overlay').classList.add('hidden');
+
+  if (session?.user) {
+    currentUser = session.user;
+    await fetchProfile();
+    document.getElementById('login-page').classList.add('hidden');
+    document.getElementById('app').style.display = 'flex';
+    onLoggedIn();
+  } else {
+    currentUser = currentProfile = null;
+    document.getElementById('login-page').classList.remove('hidden');
+    document.getElementById('app').style.display = 'none';
+    cleanupChannels();
+  }
+});
+
+async function fetchProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+  currentProfile = data;
+}
+
+// ── Toggle register / sign-in mode ────────────────────────────
+let isRegister = false;
+
+function toggleMode() {
+  isRegister = !isRegister;
+  document.getElementById('auth-name').style.display = isRegister ? 'block' : 'none';
+  document.getElementById('auth-submit-btn').textContent = isRegister ? 'Create Account' : 'Sign In';
+  document.getElementById('auth-toggle-text').innerHTML = isRegister
+    ? 'Already have an account? <span id="auth-toggle-link">Sign in</span>'
+    : 'New here? <span id="auth-toggle-link">Create an account</span>';
+  document.getElementById('auth-toggle-link').addEventListener('click', toggleMode);
+  document.getElementById('auth-error').textContent = '';
+}
+
+document.getElementById('auth-toggle-link').addEventListener('click', toggleMode);
+
+document.getElementById('auth-submit-btn').addEventListener('click', async () => {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name     = document.getElementById('auth-name').value.trim();
+  const errEl    = document.getElementById('auth-error');
+  errEl.textContent = '';
+
+  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; return; }
+
+  try {
+    if (isRegister) {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      // Write the display name into the profiles table
+      await sb.from('profiles').upsert({
+        id: data.user.id,
+        display_name: name || email.split('@')[0],
+        email
+      });
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+  } catch (err) {
+    const m = err.message || '';
+    if (m.includes('Invalid login'))     errEl.textContent = 'Incorrect email or password.';
+    else if (m.includes('already registered')) errEl.textContent = 'An account with this email exists.';
+    else if (m.includes('Password'))     errEl.textContent = 'Password must be at least 6 characters.';
+    else errEl.textContent = m || 'Something went wrong.';
+  }
+});
+
+document.getElementById('row-logout').addEventListener('click', async () => {
+  if (!confirm('Are you sure you want to log out?')) return;
+  await sb.auth.signOut();
+});
+
+function onLoggedIn() {
+  navigateTo('friends');
+  subscribeGroups();
+  subscribeInvites();
+  refreshSettingsUI();
+}
+
+/** Remove all Supabase real-time channels on logout */
+function cleanupChannels() {
+  [groupsChannel, invitesChannel, pinsChannel, chatChannel].forEach(ch => {
+    if (ch) sb.removeChannel(ch);
+  });
+  groupsChannel = invitesChannel = pinsChannel = chatChannel = null;
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function refreshSettingsUI() {
+  const name  = currentProfile?.display_name || currentUser?.email?.split('@')[0] || 'Camper';
+  const email = currentUser?.email || '—';
+  document.getElementById('settings-display-name').textContent = name;
+  document.getElementById('settings-email').textContent        = email;
+  document.getElementById('settings-avatar').textContent       = name.charAt(0).toUpperCase();
+}
+
+document.getElementById('row-profile').addEventListener('click', () => {
+  document.getElementById('profile-name-input').value = currentProfile?.display_name || '';
+  openModal('modal-profile');
+});
+
+document.getElementById('btn-save-profile').addEventListener('click', async () => {
+  const name = document.getElementById('profile-name-input').value.trim();
+  if (!name) return showToast('Name cannot be empty.');
+  await sb.from('profiles').update({ display_name: name }).eq('id', currentUser.id);
+  currentProfile = { ...currentProfile, display_name: name };
+  closeModal('modal-profile');
+  refreshSettingsUI();
+  showToast('Profile updated! ✅');
+});
+
+// ============================================================
+// FIRESIDE FRIENDS — Groups
+// ============================================================
+
+function subscribeGroups() {
+  loadGroups();
+  // Re-fetch whenever membership or group rows change
+  groupsChannel = sb.channel('grp-rt')
+    .on('postgres_changes', { event:'*', schema:'public', table:'group_members' }, loadGroups)
+    .on('postgres_changes', { event:'*', schema:'public', table:'groups' }, loadGroups)
+    .subscribe();
+}
+
+async function loadGroups() {
+  // Get IDs of every group this user belongs to
+  const { data: mems } = await sb.from('group_members').select('group_id').eq('user_id', currentUser.id);
+  const ids = (mems||[]).map(m => m.group_id);
+
+  if (!ids.length) { renderGroups([]); populateMapGroupSelect([]); return; }
+
+  const { data: groups } = await sb.from('groups').select('*').in('id', ids).order('created_at');
+
+  // Attach member list (with profile names) to each group
+  const full = await Promise.all((groups||[]).map(async g => {
+    const { data: mlist } = await sb
+      .from('group_members')
+      .select('user_id, profiles(id, display_name, email)')
+      .eq('group_id', g.id);
+    g.members = mlist || [];
+    return g;
+  }));
+
+  renderGroups(full);
+  populateMapGroupSelect(full);
+}
+
+function renderGroups(groups) {
+  const list = document.getElementById('groups-list');
+  list.innerHTML = '';
+
+  if (!groups.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔥</div>
+      <strong>No groups yet</strong>
+      <p>Start a new group and invite your camping friends!</p>
+    </div>`;
+    return;
+  }
+
+  groups.forEach(g => {
+    const mine = g.owner_id === currentUser.id;
+    const card = document.createElement('div');
+    card.className = 'group-card';
+    card.innerHTML = `
+      <div class="group-card-header">
+        <div class="group-avatar">🏕</div>
+        <div style="flex:1">
+          <div class="group-name">${esc(g.name)}</div>
+          <div class="group-meta">${mine?'👑 You own this group':'Owner: '+esc(g.owner_name||'—')} · ${g.members.length} member(s)</div>
+        </div>
+        <div class="group-chevron">›</div>
+      </div>
+      <div class="group-card-body">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Members</div>
+        <div id="ml-${g.id}"></div>
+        ${g.description?`<div style="font-size:.82rem;color:var(--text-muted);font-style:italic">${esc(g.description)}</div>`:''}
+        <div class="group-actions">
+          ${mine?`<button class="pill-btn" data-inv="${g.id}">📨 Invite</button>`:''}
+          ${mine?`<button class="pill-btn danger" data-del="${g.id}">Delete Group</button>`:''}
+        </div>
+      </div>`;
+
+    card.querySelector('.group-card-header').addEventListener('click', () =>
+      card.classList.toggle('expanded'));
+
+    // Render member rows
+    const ml = card.querySelector(`#ml-${g.id}`);
+    g.members.forEach(m => {
+      const p = m.profiles||{};
+      const n = p.display_name||p.email||'Unknown';
+      const row = document.createElement('div');
+      row.className = 'member-row';
+      row.innerHTML = `
+        <div class="member-avatar">${n.charAt(0).toUpperCase()}</div>
+        <div style="flex:1">${esc(n)}</div>
+        ${g.owner_id===m.user_id?'<span class="badge">Owner</span>':''}
+        ${mine&&g.owner_id!==m.user_id?`<button class="decline-btn" data-uid="${m.user_id}" data-gid="${g.id}">Remove</button>`:''}
+      `;
+      row.querySelector('[data-uid]')?.addEventListener('click', async () => {
+        if (!confirm(`Remove ${n} from the group?`)) return;
+        await sb.from('group_members').delete().eq('group_id',g.id).eq('user_id',m.user_id);
+        showToast('Member removed.');
+      });
+      ml.appendChild(row);
+    });
+
+    card.querySelector('[data-inv]')?.addEventListener('click', e => {
+      e.stopPropagation();
+      inviteGroupId = g.id;
+      document.getElementById('invite-email').value = '';
+      openModal('modal-invite');
+    });
+
+    card.querySelector('[data-del]')?.addEventListener('click', async e => {
+      e.stopPropagation();
+      if (!confirm(`Delete "${g.name}"? This cannot be undone.`)) return;
+      await sb.from('groups').delete().eq('id', g.id);
+      showToast('Group deleted.');
+    });
+
+    list.appendChild(card);
+  });
+}
+
+// ── New group ─────────────────────────────────────────────────
+document.getElementById('btn-new-group').addEventListener('click', () => {
+  document.getElementById('new-group-name').value = '';
+  document.getElementById('new-group-desc').value = '';
+  openModal('modal-new-group');
+});
+
+document.getElementById('btn-create-group').addEventListener('click', async () => {
+  const name = document.getElementById('new-group-name').value.trim();
+  const desc = document.getElementById('new-group-desc').value.trim();
+  if (!name) return showToast('Please enter a group name.');
+
+  const { data: grp, error } = await sb.from('groups')
+    .insert({ name, description:desc, owner_id:currentUser.id,
+              owner_name: currentProfile?.display_name||currentUser.email })
+    .select().single();
+
+  if (error) return showToast('Could not create group: '+error.message);
+
+  // Add creator as first member
+  await sb.from('group_members').insert({ group_id:grp.id, user_id:currentUser.id });
+
+  closeModal('modal-new-group');
+  showToast(`"${name}" created! 🏕`);
+});
+
+// ── Invites ───────────────────────────────────────────────────
+function subscribeInvites() {
+  loadInvites();
+  invitesChannel = sb.channel('inv-rt')
+    .on('postgres_changes', { event:'*', schema:'public', table:'invites' }, loadInvites)
+    .subscribe();
+}
+
+async function loadInvites() {
+  const { data } = await sb.from('invites').select('*')
+    .eq('to_email', currentUser.email).eq('status', 'pending');
+  renderInvites(data||[]);
+}
+
+function renderInvites(invites) {
+  const section = document.getElementById('pending-invites-section');
+  const list    = document.getElementById('pending-invites-list');
+  list.innerHTML = '';
+  section.style.display = invites.length ? 'block' : 'none';
+
+  invites.forEach(inv => {
+    const row = document.createElement('div');
+    row.className = 'invite-accept-row';
+    row.innerHTML = `
+      <span class="accept-name">Join "<strong>${esc(inv.group_name)}</strong>"</span>
+      <button class="accept-btn">Accept</button>
+      <button class="decline-btn">Decline</button>
+    `;
+    row.querySelector('.accept-btn').addEventListener('click', async () => {
+      await sb.from('group_members').insert({ group_id:inv.group_id, user_id:currentUser.id });
+      await sb.from('invites').update({ status:'accepted' }).eq('id', inv.id);
+      showToast('You joined the group! 🎉');
+    });
+    row.querySelector('.decline-btn').addEventListener('click', async () => {
+      await sb.from('invites').update({ status:'declined' }).eq('id', inv.id);
+      showToast('Invite declined.');
+    });
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('btn-send-invite').addEventListener('click', async () => {
+  const email = document.getElementById('invite-email').value.trim().toLowerCase();
+  if (!email || !inviteGroupId) return;
+
+  const { data: exists } = await sb.from('invites').select('id')
+    .eq('group_id', inviteGroupId).eq('to_email', email).eq('status','pending').maybeSingle();
+  if (exists) return showToast('An invite was already sent to that email.');
+
+  const { data: grp } = await sb.from('groups').select('name').eq('id', inviteGroupId).single();
+  await sb.from('invites').insert({
+    group_id:   inviteGroupId,
+    group_name: grp?.name||'Group',
+    from_id:    currentUser.id,
+    from_name:  currentProfile?.display_name||currentUser.email,
+    to_email:   email,
+    status:     'pending'
+  });
+  closeModal('modal-invite');
+  showToast(`Invite sent to ${email}! 📨`);
+});
+
+// ============================================================
+// MAP — Leaflet + OpenStreetMap + Nominatim (all free)
+// ============================================================
+function initMap() {
+  leafletMap = L.map('map-container', { center:[-28.5,24.7], zoom:5, zoomControl:false });
+
+  // OpenStreetMap tiles — free, no API key needed
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom:19
+  }).addTo(leafletMap);
+
+  L.control.zoom({ position:'bottomright' }).addTo(leafletMap);
+
+  // Tap map to add a pin
+  leafletMap.on('click', e => onMapClick(e.latlng.lat, e.latlng.lng));
+
+  // Restore last selected group
+  const last = localStorage.getItem('atc-last-group');
+  if (last) {
+    const sel = document.getElementById('map-group-select');
+    sel.value = last;
+    if (sel.value === last) { selectedGroupId = last; subscribePins(last); }
+  }
+}
+
+function onMapClick(lat, lng) {
+  if (!selectedGroupId) {
+    const opts = document.getElementById('map-group-select').options;
+    showToast(opts.length <= 1
+      ? 'Create a group first in Fireside Friends! 🔥'
+      : 'Select a group above to add pins.');
+    return;
+  }
+  openPinModal(null, lat, lng);
+}
+
+function populateMapGroupSelect(groups) {
+  const sel = document.getElementById('map-group-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— No Group Selected —</option>';
+  groups.forEach(g => {
+    const o = document.createElement('option');
+    o.value=g.id; o.textContent=g.name; sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+
+document.getElementById('map-group-select').addEventListener('change', function() {
+  selectedGroupId = this.value || null;
+  if (selectedGroupId) localStorage.setItem('atc-last-group', selectedGroupId);
+  clearPins();
+  if (selectedGroupId) subscribePins(selectedGroupId);
+});
+
+function clearPins() {
+  Object.values(pinMarkers).forEach(m => leafletMap.removeLayer(m));
+  pinMarkers = {};
+}
+
+function subscribePins(groupId) {
+  if (pinsChannel) sb.removeChannel(pinsChannel);
+  loadPins(groupId);
+
+  pinsChannel = sb.channel('pins-'+groupId)
+    .on('postgres_changes',{ event:'INSERT', schema:'public', table:'pins', filter:`group_id=eq.${groupId}` },
+        p => addMarker(p.new.id, p.new))
+    .on('postgres_changes',{ event:'UPDATE', schema:'public', table:'pins', filter:`group_id=eq.${groupId}` },
+        p => { if(pinMarkers[p.new.id]) leafletMap.removeLayer(pinMarkers[p.new.id]); delete pinMarkers[p.new.id]; addMarker(p.new.id,p.new); })
+    .on('postgres_changes',{ event:'DELETE', schema:'public', table:'pins' },
+        p => { if(pinMarkers[p.old.id]) leafletMap.removeLayer(pinMarkers[p.old.id]); delete pinMarkers[p.old.id]; })
+    .subscribe();
+}
+
+async function loadPins(groupId) {
+  const { data } = await sb.from('pins').select('*').eq('group_id', groupId);
+  (data||[]).forEach(p => addMarker(p.id, p));
+}
+
+const STATUS_COLORS = {
+  'Maybe':'#888','Planned':'#3b7bc4','Booked':'#9b59b6','Paid':'#27ae60','Been There':'#d4a017'
+};
+
+function addMarker(pinId, pin) {
+  if (pinMarkers[pinId]) return;
+  const color = STATUS_COLORS[pin.status]||'#888';
+  const icon  = L.divIcon({
+    className:'',
+    html:`<div style="width:28px;height:28px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,
+    iconSize:[28,40], iconAnchor:[14,40], popupAnchor:[0,-44]
+  });
+  const m = L.marker([pin.lat,pin.lng],{icon}).addTo(leafletMap)
+    .bindTooltip(pin.name||'Unnamed',{permanent:false,direction:'top'});
+  m.on('click', () => openPinModal(pinId, pin.lat, pin.lng, pin));
+  pinMarkers[pinId] = m;
+}
+
+// ── Nominatim reverse geocode (free) ─────────────────────────
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+      {headers:{'Accept-Language':'en'}});
+    return (await r.json()).display_name||'';
+  } catch { return ''; }
+}
+
+// ── Nominatim search (free) ───────────────────────────────────
+document.getElementById('map-search-toggle').addEventListener('click', () => {
+  const p = document.getElementById('map-search-panel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) document.getElementById('map-search-input').focus();
+});
+
+let searchTimer;
+document.getElementById('map-search-input').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  const q = this.value.trim();
+  document.getElementById('map-search-results').innerHTML = '';
+  if (q.length>=3) searchTimer = setTimeout(()=>nominatimSearch(q), 400);
+});
+
+async function nominatimSearch(q) {
+  const el = document.getElementById('map-search-results');
+  el.innerHTML = '<div style="padding:10px 16px;font-size:.82rem;color:var(--text-muted)">Searching…</div>';
+  try {
+    const r    = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6`,{headers:{'Accept-Language':'en'}});
+    const data = await r.json();
+    el.innerHTML = '';
+    if (!data.length) { el.innerHTML='<div style="padding:10px 16px;font-size:.82rem;color:var(--text-muted)">No results.</div>'; return; }
+    data.forEach(item => {
+      const parts = item.display_name.split(',');
+      const div   = document.createElement('div');
+      div.className = 'search-result-item';
+      div.innerHTML = `<strong>${esc(parts[0])}</strong><span>${esc(parts.slice(1,3).join(','))}</span>`;
+      div.addEventListener('click', () => {
+        const lat=parseFloat(item.lat), lng=parseFloat(item.lon);
+        leafletMap.setView([lat,lng],14);
+        document.getElementById('map-search-panel').classList.remove('open');
+        document.getElementById('map-search-input').value='';
+        el.innerHTML='';
+        openPinModal(null,lat,lng,{address:item.display_name,name:parts[0]});
+      });
+      el.appendChild(div);
+    });
+  } catch { el.innerHTML='<div style="padding:10px 16px;font-size:.82rem;color:var(--text-muted)">Search failed.</div>'; }
+}
+
+// ============================================================
+// PIN MODAL
+// ============================================================
+let _lat, _lng;
+
+async function openPinModal(pinId, lat, lng, pre={}) {
+  currentPinId = pinId; _lat=lat; _lng=lng;
+  activatePinTab('info');
+
+  document.getElementById('pin-name').value    = pre.name    || '';
+  document.getElementById('pin-status').value  = pre.status  || 'Maybe';
+  document.getElementById('pin-address').value = pre.address || '';
+  document.getElementById('pin-modal-title').textContent = pinId ? `📍 ${pre.name||'Pin'}` : '📍 New Pin';
+  document.getElementById('btn-delete-pin').style.display = pinId ? 'flex' : 'none';
+
+  // Populate CampMaster dropdown
+  const cm = document.getElementById('pin-campmaster');
+  cm.innerHTML = '';
+  if (selectedGroupId) {
+    const { data } = await sb.from('group_members')
+      .select('user_id, profiles(id,display_name,email)').eq('group_id',selectedGroupId);
+    (data||[]).forEach(m => {
+      const p=m.profiles||{}, n=p.display_name||p.email||'Unknown';
+      const o=document.createElement('option');
+      o.value=m.user_id; o.textContent=n;
+      if ((pre.campmaster_id||currentUser.id)===m.user_id) o.selected=true;
+      cm.appendChild(o);
+    });
+  }
+
+  if (!pre.address) reverseGeocode(lat,lng).then(a=>{ document.getElementById('pin-address').value=a; });
+
+  refreshRatingVis(document.getElementById('pin-status').value, pinId);
+
+  if (pinId) subscribeChat(pinId);
+  else { document.getElementById('pin-chat-messages').innerHTML=''; if(chatChannel){sb.removeChannel(chatChannel);chatChannel=null;} }
+
+  openModal('modal-pin');
+}
+
+function refreshRatingVis(status, pinId) {
+  const open = status==='Been There' && pinId;
+  document.getElementById('rating-locked-msg').style.display  = open?'none':'block';
+  document.getElementById('rating-content').style.display     = open?'block':'none';
+  if (open) loadRatings(pinId);
+}
+
+document.getElementById('pin-status').addEventListener('change', function(){
+  refreshRatingVis(this.value, currentPinId);
+});
+
+// ── Save pin ──────────────────────────────────────────────────
+document.getElementById('btn-save-pin').addEventListener('click', async () => {
+  const name = document.getElementById('pin-name').value.trim();
+  if (!name) return showToast('Name is required. 📍');
+
+  const cm = document.getElementById('pin-campmaster');
+  const payload = {
+    name, status: document.getElementById('pin-status').value,
+    address: document.getElementById('pin-address').value,
+    campmaster_id: cm.value,
+    campmaster_name: cm.options[cm.selectedIndex]?.textContent||'',
+    group_id: selectedGroupId, lat:_lat, lng:_lng,
+    updated_at: new Date().toISOString()
+  };
+
+  if (currentPinId) {
+    await sb.from('pins').update(payload).eq('id', currentPinId);
+    showToast('Pin updated! 📍');
+  } else {
+    payload.created_by      = currentUser.id;
+    payload.created_by_name = currentProfile?.display_name||currentUser.email;
+    payload.created_at      = new Date().toISOString();
+    await sb.from('pins').insert(payload);
+    showToast('Pin saved! 📍');
+  }
+  closeModal('modal-pin');
+});
+
+// ── Delete pin ────────────────────────────────────────────────
+document.getElementById('btn-delete-pin').addEventListener('click', async () => {
+  if (!currentPinId || !confirm('Delete this pin?')) return;
+  await sb.from('pins').delete().eq('id', currentPinId);
+  closeModal('modal-pin');
+  showToast('Pin deleted.');
+});
+
+// ── Pin sub-tab switching ─────────────────────────────────────
+document.querySelectorAll('.pin-tab-btn').forEach(btn =>
+  btn.addEventListener('click', () => activatePinTab(btn.dataset.pintab))
+);
+
+function activatePinTab(tab) {
+  document.querySelectorAll('.pin-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.pintab===tab));
+  document.querySelectorAll('.pin-tab-panel').forEach(p => p.classList.toggle('active', p.id===`pintab-${tab}`));
+}
+
+// ── Chat ──────────────────────────────────────────────────────
+function subscribeChat(pinId) {
+  if (chatChannel) sb.removeChannel(chatChannel);
+  loadChat(pinId);
+  chatChannel = sb.channel('chat-'+pinId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'pin_chat',filter:`pin_id=eq.${pinId}`},
+        p => appendBubble(p.new))
+    .subscribe();
+}
+
+async function loadChat(pinId) {
+  const { data } = await sb.from('pin_chat').select('*').eq('pin_id',pinId).order('created_at');
+  document.getElementById('pin-chat-messages').innerHTML='';
+  (data||[]).forEach(appendBubble);
+}
+
+function appendBubble(msg) {
+  const el   = document.getElementById('pin-chat-messages');
+  const mine = msg.user_id===currentUser.id;
+  const div  = document.createElement('div');
+  div.className = `chat-bubble ${mine?'mine':'theirs'}`;
+  div.innerHTML = `${!mine?`<div class="bubble-author">${esc(msg.display_name||'Someone')}</div>`:''}${esc(msg.message)}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+document.getElementById('pin-chat-send').addEventListener('click', sendChat);
+document.getElementById('pin-chat-input').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+async function sendChat() {
+  const input=document.getElementById('pin-chat-input'), msg=input.value.trim();
+  if (!msg||!currentPinId) return;
+  input.value='';
+  await sb.from('pin_chat').insert({
+    pin_id:currentPinId, user_id:currentUser.id,
+    display_name: currentProfile?.display_name||currentUser.email,
+    message:msg, created_at:new Date().toISOString()
+  });
+}
+
+// ── Ratings ───────────────────────────────────────────────────
+document.querySelectorAll('.rating-star').forEach(s =>
+  s.addEventListener('click', function(){
+    selectedRating=parseInt(this.dataset.val);
+    document.querySelectorAll('.rating-star').forEach((x,i)=>x.classList.toggle('active',i<selectedRating));
+  })
+);
+
+document.getElementById('btn-submit-rating').addEventListener('click', async () => {
+  if (!selectedRating) return showToast('Please select a rating first.');
+  if (!currentPinId) return;
+  await sb.from('pin_ratings').upsert({
+    pin_id:currentPinId, user_id:currentUser.id,
+    display_name:currentProfile?.display_name||currentUser.email,
+    rating:selectedRating
+  }, {onConflict:'pin_id,user_id'});
+  showToast('Rating submitted! ⭐');
+  loadRatings(currentPinId);
+});
+
+async function loadRatings(pinId) {
+  const { data: rs } = await sb.from('pin_ratings').select('*').eq('pin_id',pinId).order('created_at');
+  const el = document.getElementById('rating-summary');
+  if (!rs?.length) { el.innerHTML='<div style="color:var(--text-muted);font-size:.85rem">No ratings yet. Be the first!</div>'; return; }
+  const avg  = rs.reduce((s,r)=>s+r.rating,0)/rs.length;
+  const stars= '★'.repeat(Math.round(avg))+'☆'.repeat(5-Math.round(avg));
+  el.innerHTML = `
+    <div class="rating-avg">${stars} ${avg.toFixed(1)}</div>
+    <div style="color:var(--text-muted);font-size:.8rem">${rs.length} rating(s)</div>
+    <div class="divider"></div>
+    ${rs.map(r=>`<div style="font-size:.8rem;display:flex;justify-content:space-between;padding:3px 0">
+      <span>${esc(r.display_name)}</span><span>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+    </div>`).join('')}`;
+
+  // Pre-select user's own previous rating
+  const mine = rs.find(r=>r.user_id===currentUser.id);
+  if (mine) {
+    selectedRating = mine.rating;
+    document.querySelectorAll('.rating-star').forEach((s,i)=>s.classList.toggle('active',i<selectedRating));
+  }
+}
+
+// ============================================================
+// PWA — Service Worker registration
+// sw.js must sit in the same directory as this HTML file.
+// It caches the app shell and OSM tiles for offline use.
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(r  => console.log('[ATC] SW registered:', r.scope))
+      .catch(e => console.warn('[ATC] SW failed:', e));
+  });
+}
+</script>
+</body>
+</html>
