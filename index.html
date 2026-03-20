@@ -707,13 +707,13 @@ document.querySelectorAll('.tab-item').forEach(btn =>
 // Show splash first, wait for Continue tap, then check auth state
 let authResolved = false;
 let splashDismissed = false;
-let pendingAuthState = null; // holds session while splash is showing
+let pendingAuthState = undefined; // undefined = not yet resolved, null = resolved with no session
 
 document.getElementById('btn-splash-continue').addEventListener('click', () => {
   document.getElementById('splash-page').classList.add('hidden');
   splashDismissed = true;
   // If auth already resolved while splash was showing, apply it now
-  if (pendingAuthState !== null) applyAuthState(pendingAuthState);
+  if (pendingAuthState !== undefined) applyAuthState(pendingAuthState);
 });
 
 function applyAuthState(session) {
@@ -742,9 +742,8 @@ function applyAuthState(session) {
 // ============================================================
 sb.auth.onAuthStateChange(async (event, session) => {
   if (!splashDismissed) {
-    // Splash still showing — buffer the result
-    pendingAuthState = session;
-    // Hide the loading spinner since we have an answer
+    // Splash still showing — buffer the result (session may be null = not logged in)
+    pendingAuthState = session === null ? null : session;
     document.getElementById('loading-overlay').classList.add('hidden');
     return;
   }
