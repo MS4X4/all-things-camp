@@ -683,6 +683,8 @@ document.querySelectorAll('.tab-item').forEach(btn =>
 function applyAuthState(session) {
   document.getElementById('loading-overlay').classList.add('hidden');
   if (session?.user) {
+    // Avoid re-initialising if already logged in as the same user
+    if (currentUser?.id === session.user.id) return;
     currentUser = session.user;
     fetchProfile().then(() => {
       document.getElementById('splash-page').classList.add('hidden');
@@ -697,16 +699,25 @@ function applyAuthState(session) {
   }
 }
 
-
 // ============================================================
 // AUTH
-// Supabase persists the session in localStorage by default —
-// returning users are signed in automatically without needing
-// to log in again (auth state persistence built-in).
 // ============================================================
 sb.auth.onAuthStateChange(async (event, session) => {
-  applyAuthState(session);
+  // SIGNED_IN fires both on OAuth callback and on page load with existing session
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+    applyAuthState(session);
+  } else if (event === 'SIGNED_OUT') {
+    applyAuthState(null);
+  }
 });
+
+// Also explicitly check for an existing session on page load.
+// This catches the OAuth hash fragment (#access_token=...) on redirect back
+// from Google before onAuthStateChange fires.
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  applyAuthState(session);
+})();
 
 async function fetchProfile() {
   const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
