@@ -233,8 +233,9 @@
       cursor:pointer;border-bottom:2px solid transparent;
       transition:color .2s,border-color .2s;font-family:'Cabin',sans-serif;letter-spacing:.04em}
     .pin-tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
-    .pin-tab-panel{display:none}
-    .pin-tab-panel.active{display:block}
+    .pin-tab-panel{visibility:hidden;position:absolute;width:100%;top:0;left:0;pointer-events:none}
+    .pin-tab-panel.active{visibility:visible;position:relative;pointer-events:all}
+    .pin-tabs-container{position:relative;min-height:var(--pin-info-height,320px)}
 
     /* ── Chat ────────────────────────────────────────────── */
     .chat-messages{max-height:220px;overflow-y:auto;display:flex;
@@ -522,6 +523,8 @@
       <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
       <button class="pin-tab-btn"        data-pintab="rating">Rating</button>
     </div>
+    <!-- Tab panels container — sized to info tab so modal never resizes -->
+    <div class="pin-tabs-container" id="pin-tabs-container">
     <!-- Info tab -->
     <div class="pin-tab-panel active" id="pintab-info">
       <div class="form-group">
@@ -575,6 +578,7 @@
         <div class="rating-summary" id="rating-summary"></div>
       </div>
     </div>
+    </div><!-- /pin-tabs-container -->
   </div>
 </div>
 
@@ -1221,7 +1225,8 @@ async function openPinModal(pinId, lat, lng, pre={}) {
   document.getElementById('pin-name').value    = pre.name    || '';
   document.getElementById('pin-status').value  = pre.status  || 'Maybe';
   document.getElementById('pin-address').value = pre.address || '';
-  document.getElementById('pin-modal-title').textContent = pinId ? `📍 ${pre.name||'Pin'}` : '📍 New Pin';
+  const titleEmoji = (PIN_STYLES[pre.status || 'Maybe'] || PIN_STYLES['Maybe']).emoji;
+  document.getElementById('pin-modal-title').textContent = pinId ? `${titleEmoji} ${pre.name||'Pin'}` : `${titleEmoji} New Pin`;
   document.getElementById('btn-delete-pin').style.display = pinId ? 'flex' : 'none';
 
   // Populate hidden CampMaster select and update the display name in the header
@@ -1251,6 +1256,13 @@ async function openPinModal(pinId, lat, lng, pre={}) {
   else { document.getElementById('pin-chat-messages').innerHTML=''; if(chatChannel){sb.removeChannel(chatChannel);chatChannel=null;} }
 
   openModal('modal-pin');
+
+  // Lock container height to info tab so modal never resizes on tab switch
+  requestAnimationFrame(() => {
+    const info = document.getElementById('pintab-info');
+    const container = document.getElementById('pin-tabs-container');
+    container.style.minHeight = info.offsetHeight + 'px';
+  });
 }
 
 function refreshRatingVis(status, pinId) {
@@ -1272,6 +1284,11 @@ function refreshRatingVis(status, pinId) {
 
 document.getElementById('pin-status').addEventListener('change', function(){
   refreshRatingVis(this.value, currentPinId);
+  // Update the title emoji to match the new status
+  const emoji = (PIN_STYLES[this.value] || PIN_STYLES['Maybe']).emoji;
+  const title = document.getElementById('pin-modal-title');
+  const name  = title.textContent.split(' ').slice(1).join(' ');
+  title.textContent = `${emoji} ${name}`;
 });
 
 // ── Save pin ──────────────────────────────────────────────────
