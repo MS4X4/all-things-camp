@@ -702,6 +702,17 @@ sb.auth.onAuthStateChange(async (event, session) => {
 })();
 
 async function fetchProfile() {
+  // Upsert ensures a profile row always exists, even for OAuth users
+  const displayName = currentUser.user_metadata?.full_name ||
+                      currentUser.user_metadata?.name ||
+                      currentUser.email?.split('@')[0] || 'Camper';
+
+  await sb.from('profiles').upsert({
+    id:           currentUser.id,
+    email:        currentUser.email,
+    display_name: displayName
+  }, { onConflict: 'id', ignoreDuplicates: false });
+
   const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
   currentProfile = data;
 }
