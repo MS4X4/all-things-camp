@@ -280,9 +280,44 @@ Add this inside `<head>` in `index.html`:
 
 ---
 
+
+
+---
+
+## Google OAuth Setup
+
+The app uses Google sign-in only — no email/password.
+
+### Step 1 — Google Cloud Console
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Create a new project → **APIs & Services** → **Credentials**
+3. Click **Create Credentials** → **OAuth Client ID**
+4. Configure consent screen if prompted (User type: External)
+5. Application type: **Web application**
+6. Under **Authorised redirect URIs** add:
+   ```
+   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+   ```
+7. Copy the **Client ID** and **Client Secret**
+
+### Step 2 — Supabase
+1. Go to **Authentication** → **Providers** → **Google**
+2. Toggle on, paste Client ID and Client Secret → **Save**
+3. Go to **Authentication** → **URL Configuration**
+4. Under **Redirect URLs** add:
+   ```
+   https://YOUR_USERNAME.github.io/all-things-camp/
+   ```
+
+### Step 3 — Disable email confirmation (not needed for OAuth)
+1. Go to **Authentication** → **Providers** → **Email**
+2. Toggle **Email provider** off entirely → **Save**
+
+---
+
 ## About Invites
 
-Invites are stored in the database and shown in-app to any user who logs in with the invited email address. No email is sent automatically — this avoids needing a paid email service.
+Invites are stored in the database and shown in-app to any user who logs in with the invited Google account email. No email is sent automatically.
 
 **To add real email delivery (still free):**
 

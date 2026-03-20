@@ -1,10 +1,19 @@
 {
-    "name": "All Things Camp",
-    "short_name": "Camp",
-    "description": "Your camping companion",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#1a2e1a",
-    "theme_color": "#2d5a1b",
-    "orientation": "portrait"
+  "name": "All Things Camp",
+  "short_name": "Camp",
+  "description": "Your camping companion",
+  "start_url": "/all-things-camp/",
+  "scope": "/all-things-camp/",
+  "display": "standalone",
+  "background_color": "#1B3A6B",
+  "theme_color": "#C8620A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }

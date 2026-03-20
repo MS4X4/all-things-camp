@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1a2e1a" />
+  <meta name="theme-color" content="#1B3A6B" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>All Things Camp</title>
@@ -16,28 +16,30 @@
        OpenStreetMap: free map tiles
        Nominatim    : free geocoding
   ============================================================ -->
-  <link rel="manifest" href="/all-things-camp/manifest.json" />
-  <link rel="preconnect" href="https://fonts.bunny.net" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./logo.png" />
   <link href="https://fonts.bunny.net/css?family=cabin:400,400i,600,700|playfair-display:700,900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     /* ── Theme variables ─────────────────────────────────── */
     :root {
-      --bg:#f4f0e8; --bg-card:#fdf9f2; --bg-surface:#ece7dc;
-      --border:#c8bfa8; --text:#1c1c14; --text-muted:#6b6050;
-      --accent:#2d5a1b; --accent-light:#4a8a30; --accent-warm:#c4601a;
-      --tab-bg:#e5dfd4; --shadow:rgba(0,0,0,0.12);
-      --danger:#b83232; --star:#d4a017; --input-bg:#fff;
-      --overlay:rgba(28,28,20,0.55);
+      --bg:#FDF5E6; --bg-card:#FFFBF2; --bg-surface:#F5E6C8;
+      --border:#D4A96A; --text:#2C1810; --text-muted:#7A5C3A;
+      --accent:#C8620A; --accent-light:#E8820C; --accent-warm:#4A9B2F;
+      --tab-bg:#F0D9AA; --shadow:rgba(44,24,16,0.15);
+      --danger:#b83232; --star:#E8820C; --input-bg:#FFFBF2;
+      --overlay:rgba(27,58,107,0.6);
+      --wood:#8B4513; --forest:#2D7A1F; --sky:#1B3A6B;
     }
     [data-theme="dark"] {
-      --bg:#111810; --bg-card:#1a2218; --bg-surface:#222d20;
-      --border:#3a4a36; --text:#e8e4d8; --text-muted:#8a9a84;
-      --accent:#6ab84a; --accent-light:#8ed46a; --accent-warm:#e07840;
-      --tab-bg:#1a2218; --shadow:rgba(0,0,0,0.4);
-      --danger:#e05050; --star:#e8b830; --input-bg:#1a2218;
-      --overlay:rgba(10,14,10,0.7);
+      --bg:#0F1E0A; --bg-card:#162010; --bg-surface:#1E2E14;
+      --border:#3A5A20; --text:#F5E6C8; --text-muted:#A89070;
+      --accent:#E8820C; --accent-light:#F5A623; --accent-warm:#5AB830;
+      --tab-bg:#162010; --shadow:rgba(0,0,0,0.5);
+      --danger:#e05050; --star:#F5A623; --input-bg:#162010;
+      --overlay:rgba(10,14,8,0.75);
+      --wood:#A0632A; --forest:#4A9B2F; --sky:#2A5A9B;
     }
 
     /* ── Reset & base ────────────────────────────────────── */
@@ -76,30 +78,43 @@
     .tab-item .ti{font-size:1.4rem}
     .tab-item.active{color:var(--accent)}
 
+    /* ── Splash screen ───────────────────────────────────── */
+    #splash-page{position:fixed;inset:0;background:linear-gradient(180deg,#1B3A6B 0%,#0F2544 60%,#2C1810 100%);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      z-index:1001;padding:0}
+    #splash-page.hidden{display:none}
+    .splash-logo{width:min(82vw,340px);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+      animation:logoIn .7s cubic-bezier(.34,1.4,.64,1) both}
+    @keyframes logoIn{from{transform:scale(.7) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+    .splash-continue{margin-top:32px;padding:16px 52px;
+      background:linear-gradient(135deg,#C8620A,#E8820C);
+      color:#fff;border:none;border-radius:30px;font-family:'Cabin',sans-serif;font-weight:700;
+      font-size:1.1rem;letter-spacing:.06em;cursor:pointer;
+      box-shadow:0 4px 20px rgba(200,98,10,.5);
+      animation:btnIn .5s .4s cubic-bezier(.34,1.4,.64,1) both;
+      transition:transform .15s,box-shadow .15s}
+    .splash-continue:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(200,98,10,.6)}
+    .splash-continue:active{transform:scale(.97)}
+    @keyframes btnIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .splash-tagline{color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:.18em;
+      text-transform:uppercase;margin-top:14px;animation:btnIn .5s .6s both}
+
     /* ── Login page ──────────────────────────────────────── */
-    #login-page{position:fixed;inset:0;background:var(--accent);display:flex;
-      flex-direction:column;align-items:center;justify-content:center;
+    #login-page{position:fixed;inset:0;
+      background:linear-gradient(160deg,#1B3A6B 0%,#0F2544 50%,#2C1810 100%);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
       z-index:1000;padding:32px 24px}
     #login-page.hidden{display:none}
-    .login-logo{font-size:3.5rem;margin-bottom:12px}
-    .login-title{font-family:'Playfair Display',serif;font-size:2.2rem;
-      font-weight:900;color:#fff;text-align:center;line-height:1.1}
-    .login-tagline{color:rgba(255,255,255,.65);font-size:.8rem;
-      letter-spacing:.15em;text-transform:uppercase;margin:8px 0 36px}
-    .login-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
-      border-radius:16px;padding:24px;width:100%;max-width:340px;
-      display:flex;flex-direction:column;gap:12px}
-    .login-card input{width:100%;padding:12px 14px;border-radius:10px;
-      border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.12);
-      color:#fff;font-family:'Cabin',sans-serif;font-size:.95rem}
-    .login-card input::placeholder{color:rgba(255,255,255,.5)}
-    .login-card input:focus{outline:none;border-color:rgba(255,255,255,.6)}
-    .btn-primary{background:#fff;color:var(--accent);border:none;border-radius:10px;
-      padding:13px 20px;font-family:'Cabin',sans-serif;font-weight:700;
-      font-size:.95rem;cursor:pointer;width:100%;transition:opacity .2s}
-    .btn-primary:hover{opacity:.92}
-    .login-toggle{text-align:center;color:rgba(255,255,255,.65);font-size:.82rem}
-    .login-toggle span{color:#fff;font-weight:700;cursor:pointer;text-decoration:underline}
+    .login-logo-sm{width:min(60vw,200px);height:auto;margin-bottom:28px;
+      filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+    .login-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+      border-radius:20px;padding:28px 24px;width:100%;max-width:340px;
+      display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+    .btn-primary{background:linear-gradient(135deg,#C8620A,#E8820C);color:#fff;border:none;
+      border-radius:12px;padding:14px 20px;font-family:'Cabin',sans-serif;font-weight:700;
+      font-size:1rem;cursor:pointer;width:100%;transition:opacity .2s,transform .15s;
+      box-shadow:0 3px 12px rgba(200,98,10,.4)}
+    .btn-primary:hover{opacity:.92;transform:translateY(-1px)}
     .auth-error{color:#ffcccc;font-size:.82rem;text-align:center;min-height:1.2em}
 
     /* ── Common components ───────────────────────────────── */
@@ -298,27 +313,29 @@
 <body>
 
 <div class="loading-overlay" id="loading-overlay">
-  <div style="font-size:3rem">🏕️</div>
+  <img src="./logo.png" style="width:180px;height:auto;margin-bottom:16px" alt="All Things Camp" />
   <div class="spinner"></div>
   <div style="color:var(--text-muted);font-size:.82rem">Setting up camp…</div>
 </div>
 
 <div id="toast"></div>
 
+<!-- ── Splash screen ──────────────────────────────────────── -->
+<div id="splash-page">
+  <img src="./logo.png" class="splash-logo" alt="All Things Camp" />
+  <button class="splash-continue" id="btn-splash-continue">Let's Go!</button>
+  <div class="splash-tagline">Your camping companion</div>
+</div>
+
 <!-- ── Login ─────────────────────────────────────────────── -->
 <div id="login-page" class="hidden">
-  <div class="login-logo">🏕️</div>
-  <div class="login-title">All Things Camp</div>
-  <div class="login-tagline">Adventure starts here</div>
+  <img src="./logo.png" class="login-logo-sm" alt="All Things Camp" />
   <div class="login-card">
     <div class="auth-error" id="auth-error"></div>
-    <input type="text"     id="auth-name"     placeholder="Your name"     style="display:none" />
-    <input type="email"    id="auth-email"    placeholder="Email address" autocomplete="email" />
-    <input type="password" id="auth-password" placeholder="Password"      autocomplete="current-password" />
-    <button class="btn-primary" id="auth-submit-btn">Sign In</button>
-    <div class="login-toggle" id="auth-toggle-text">
-      New here? <span id="auth-toggle-link">Create an account</span>
-    </div>
+    <button class="btn-primary" id="btn-google-signin" style="display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.2-2.7-.5-4z"/></svg>
+      Continue with Google
+    </button>
   </div>
 </div>
 
@@ -326,9 +343,12 @@
 <div id="app" style="display:none">
 
   <header class="app-header">
-    <div>
-      <h1>🏕️ All Things Camp</h1>
-      <div class="subtitle" id="header-subtitle">Fireside Friends</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="./logo.png" style="width:36px;height:36px;object-fit:contain;border-radius:8px" alt="" />
+      <div>
+        <h1>All Things Camp</h1>
+        <div class="subtitle" id="header-subtitle">Fireside Friends</div>
+      </div>
     </div>
   </header>
 
@@ -566,8 +586,8 @@
 //     supabase.com → Project Settings → API
 //     Free tier: no credit card required, not Google.
 // ============================================================
-const SUPABASE_URL = 'https://vfidmdmqlgskfygxwmtj.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmaWRtZG1xbGdza2Z5Z3h3bXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzEwMDEsImV4cCI6MjA4OTUwNzAwMX0.eddfe8obhGjLT3eB2r0n_AtGJtFKBzKIFyzfLQUX2pg';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';       // e.g. https://abcxyz.supabase.co
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';  // public anon key
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -640,6 +660,37 @@ document.querySelectorAll('.tab-item').forEach(btn =>
   btn.addEventListener('click', () => navigateTo(btn.dataset.page))
 );
 
+// ── Splash screen ─────────────────────────────────────────────
+// Show splash first, wait for Continue tap, then check auth state
+let authResolved = false;
+let splashDismissed = false;
+let pendingAuthState = null; // holds session while splash is showing
+
+document.getElementById('btn-splash-continue').addEventListener('click', () => {
+  document.getElementById('splash-page').classList.add('hidden');
+  splashDismissed = true;
+  // If auth already resolved while splash was showing, apply it now
+  if (pendingAuthState !== null) applyAuthState(pendingAuthState);
+});
+
+function applyAuthState(session) {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  if (session?.user) {
+    currentUser = session.user;
+    fetchProfile().then(() => {
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('app').style.display = 'flex';
+      onLoggedIn();
+    });
+  } else {
+    currentUser = currentProfile = null;
+    document.getElementById('login-page').classList.remove('hidden');
+    document.getElementById('app').style.display = 'none';
+    cleanupChannels();
+  }
+}
+
+
 // ============================================================
 // AUTH
 // Supabase persists the session in localStorage by default —
@@ -647,20 +698,14 @@ document.querySelectorAll('.tab-item').forEach(btn =>
 // to log in again (auth state persistence built-in).
 // ============================================================
 sb.auth.onAuthStateChange(async (event, session) => {
-  document.getElementById('loading-overlay').classList.add('hidden');
-
-  if (session?.user) {
-    currentUser = session.user;
-    await fetchProfile();
-    document.getElementById('login-page').classList.add('hidden');
-    document.getElementById('app').style.display = 'flex';
-    onLoggedIn();
-  } else {
-    currentUser = currentProfile = null;
-    document.getElementById('login-page').classList.remove('hidden');
-    document.getElementById('app').style.display = 'none';
-    cleanupChannels();
+  if (!splashDismissed) {
+    // Splash still showing — buffer the result
+    pendingAuthState = session;
+    // Hide the loading spinner since we have an answer
+    document.getElementById('loading-overlay').classList.add('hidden');
+    return;
   }
+  applyAuthState(session);
 });
 
 async function fetchProfile() {
@@ -669,51 +714,13 @@ async function fetchProfile() {
 }
 
 // ── Toggle register / sign-in mode ────────────────────────────
-let isRegister = false;
-
-function toggleMode() {
-  isRegister = !isRegister;
-  document.getElementById('auth-name').style.display = isRegister ? 'block' : 'none';
-  document.getElementById('auth-submit-btn').textContent = isRegister ? 'Create Account' : 'Sign In';
-  document.getElementById('auth-toggle-text').innerHTML = isRegister
-    ? 'Already have an account? <span id="auth-toggle-link">Sign in</span>'
-    : 'New here? <span id="auth-toggle-link">Create an account</span>';
-  document.getElementById('auth-toggle-link').addEventListener('click', toggleMode);
-  document.getElementById('auth-error').textContent = '';
-}
-
-document.getElementById('auth-toggle-link').addEventListener('click', toggleMode);
-
-document.getElementById('auth-submit-btn').addEventListener('click', async () => {
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const name     = document.getElementById('auth-name').value.trim();
-  const errEl    = document.getElementById('auth-error');
-  errEl.textContent = '';
-
-  if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; return; }
-
-  try {
-    if (isRegister) {
-      const { data, error } = await sb.auth.signUp({ email, password });
-      if (error) throw error;
-      // Write the display name into the profiles table
-      await sb.from('profiles').upsert({
-        id: data.user.id,
-        display_name: name || email.split('@')[0],
-        email
-      });
-    } else {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    }
-  } catch (err) {
-    const m = err.message || '';
-    if (m.includes('Invalid login'))     errEl.textContent = 'Incorrect email or password.';
-    else if (m.includes('already registered')) errEl.textContent = 'An account with this email exists.';
-    else if (m.includes('Password'))     errEl.textContent = 'Password must be at least 6 characters.';
-    else errEl.textContent = m || 'Something went wrong.';
-  }
+// Google sign-in
+document.getElementById('btn-google-signin').addEventListener('click', async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) document.getElementById('auth-error').textContent = error.message;
 });
 
 document.getElementById('row-logout').addEventListener('click', async () => {
@@ -1290,18 +1297,6 @@ async function loadRatings(pinId) {
   }
 }
 
-// ============================================================
-// PWA — Service Worker registration
-// sw.js must sit in the same directory as this HTML file.
-// It caches the app shell and OSM tiles for offline use.
-// ============================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-     .then(r  => console.log('[ATC] SW registered:', r.scope))
-      .catch(e => console.warn('[ATC] SW failed:', e));
-  });
-}
 
 </script>
 </body>
