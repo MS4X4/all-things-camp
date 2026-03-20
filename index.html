@@ -1097,20 +1097,60 @@ async function loadPins(groupId) {
   (data||[]).forEach(p => addMarker(p.id, p));
 }
 
-const STATUS_COLORS = {
-  'Maybe':'#888','Planned':'#3b7bc4','Reserved':'#27ae60','Been There':'#d4a017'
+const PIN_STYLES = {
+  'Maybe':      { bg:'#6B6B6B', ring:'#ffffff', emoji:'💭' },
+  'Planned':    { bg:'#1565C0', ring:'#ffffff', emoji:'📅' },
+  'Reserved':   { bg:'#2E7D32', ring:'#ffffff', emoji:'⛺' },
+  'Been There': { bg:'#E65100', ring:'#FFD600', emoji:'🌟' }
 };
+
+function makePinIcon(status) {
+  const s = PIN_STYLES[status] || PIN_STYLES['Maybe'];
+  const W=48, H=58, R=20;
+  const canvas = document.createElement('canvas');
+  canvas.width=W; canvas.height=H;
+  const ctx = canvas.getContext('2d');
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(W/2, R+2, R+4, 0, Math.PI*2);
+  ctx.fillStyle = s.ring;
+  ctx.fill();
+
+  // Coloured circle
+  ctx.beginPath();
+  ctx.arc(W/2, R+2, R, 0, Math.PI*2);
+  ctx.fillStyle = s.bg;
+  ctx.fill();
+
+  // Emoji
+  ctx.font = `${R*1.15}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(s.emoji, W/2, R+2);
+
+  // Pointer
+  ctx.beginPath();
+  ctx.moveTo(W/2-8, R*2+3);
+  ctx.lineTo(W/2+8, R*2+3);
+  ctx.lineTo(W/2,   H-2);
+  ctx.closePath();
+  ctx.fillStyle = s.bg;
+  ctx.fill();
+
+  return L.icon({
+    iconUrl:     canvas.toDataURL(),
+    iconSize:    [W, H],
+    iconAnchor:  [W/2, H],
+    popupAnchor: [0, -H]
+  });
+}
 
 function addMarker(pinId, pin) {
   if (pinMarkers[pinId]) return;
-  const color = STATUS_COLORS[pin.status]||'#888';
-  const icon  = L.divIcon({
-    className:'',
-    html:`<div style="width:28px;height:28px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,
-    iconSize:[28,40], iconAnchor:[14,40], popupAnchor:[0,-44]
-  });
-  const m = L.marker([pin.lat,pin.lng],{icon}).addTo(leafletMap)
-    .bindTooltip(pin.name||'Unnamed',{permanent:false,direction:'top'});
+  const icon = makePinIcon(pin.status || 'Maybe');
+  const m = L.marker([pin.lat, pin.lng], {icon}).addTo(leafletMap)
+    .bindTooltip(pin.name||'Unnamed', {permanent:false, direction:'top'});
   m.on('click', () => openPinModal(pinId, pin.lat, pin.lng, pin));
   pinMarkers[pinId] = m;
 }
