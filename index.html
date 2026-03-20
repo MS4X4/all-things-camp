@@ -649,8 +649,11 @@ function navigateTo(page) {
   document.getElementById('header-subtitle').textContent =
     {friends:'Fireside Friends', map:'Camping Compass', settings:'Basecamp Basics'}[page] || '';
 
-  if (page==='map' && !mapInitialized) { initMap(); mapInitialized=true; }
-  if (page==='map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+  if (page==='map' && !mapInitialized) {
+    mapInitialized = true;
+    setTimeout(() => { initMap(); }, 120);
+  }
+  if (page==='map' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 150);
   if (page==='settings') refreshSettingsUI();
 }
 
@@ -828,6 +831,7 @@ function renderGroups(groups) {
         <div class="group-actions">
           ${mine?`<button class="pill-btn" data-inv="${g.id}">📨 Invite</button>`:''}
           ${mine?`<button class="pill-btn danger" data-del="${g.id}">Delete Group</button>`:''}
+          ${!mine?`<button class="pill-btn danger" data-leave="${g.id}" data-gname="${esc(g.name)}">Leave Group</button>`:''}
         </div>
       </div>`;
 
@@ -865,6 +869,16 @@ function renderGroups(groups) {
       if (!confirm(`Delete "${g.name}"? This cannot be undone.`)) return;
       await sb.from('groups').delete().eq('id', g.id);
       showToast('Group deleted.');
+    });
+
+    card.querySelector('[data-leave]')?.addEventListener('click', async e => {
+      e.stopPropagation();
+      if (!confirm(`Leave "${g.name}"? You'll need a new invite to rejoin.`)) return;
+      await sb.from('group_members')
+        .delete()
+        .eq('group_id', g.id)
+        .eq('user_id', currentUser.id);
+      showToast(`You left "${g.name}".`);
     });
 
     list.appendChild(card);
@@ -992,6 +1006,9 @@ function initMap() {
   }).addTo(leafletMap);
 
   L.control.zoom({ position:'bottomright' }).addTo(leafletMap);
+
+  // Force Leaflet to recalculate container size after paint
+  setTimeout(() => leafletMap.invalidateSize(), 200);
 
   // Tap map to add a pin
   leafletMap.on('click', e => onMapClick(e.latlng.lat, e.latlng.lng));
