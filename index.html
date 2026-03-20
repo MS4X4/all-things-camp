@@ -107,25 +107,9 @@
     @keyframes btnIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .splash-tagline{color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:.18em;
       text-transform:uppercase;margin-top:14px;animation:btnIn .5s .6s both}
+    .auth-error{color:#ffcccc;font-size:.85rem;text-align:center;
+      min-height:1.2em;margin-top:8px;animation:btnIn .3s both}
 
-    /* ── Login page ──────────────────────────────────────── */
-    #login-page{position:fixed;inset:0;
-      background:linear-gradient(160deg,#1B3A6B 0%,#0F2544 50%,#2C1810 100%);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      z-index:1000;padding:32px 24px}
-    #login-page.hidden{display:none}
-    .login-logo-sm{width:min(60vw,200px);height:auto;margin-bottom:28px;
-      filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
-    .login-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
-      border-radius:20px;padding:28px 24px;width:100%;max-width:340px;
-      display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
-    .btn-primary{background:var(--camp-grad-h,linear-gradient(135deg,#C8F050,#6DC230,#2D7A10));
-      color:#fff;border:none;border-radius:12px;padding:14px 20px;
-      font-family:'Cabin',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;
-      width:100%;transition:opacity .2s,transform .15s;
-      box-shadow:0 3px 12px rgba(45,122,16,.4);text-shadow:0 1px 2px rgba(0,0,0,.25)}
-    .btn-primary:hover{opacity:.92;transform:translateY(-1px)}
-    .auth-error{color:#ffcccc;font-size:.82rem;text-align:center;min-height:1.2em}
 
     /* ── Common components ───────────────────────────────── */
     .section-bar{background:var(--bg-surface);border-bottom:1px solid var(--border);
@@ -338,20 +322,12 @@
 <!-- ── Splash screen ──────────────────────────────────────── -->
 <div id="splash-page">
   <img src="./logo.png" class="splash-logo" alt="All Things Camp" />
-  <button class="splash-continue" id="btn-splash-continue">Let's Go!</button>
+  <div class="auth-error" id="auth-error"></div>
+  <button class="splash-continue" id="btn-google-signin" style="display:flex;align-items:center;justify-content:center;gap:12px">
+    <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.2-2.7-.5-4z"/></svg>
+    Continue with Google
+  </button>
   <div class="splash-tagline">Your camping companion</div>
-</div>
-
-<!-- ── Login ─────────────────────────────────────────────── -->
-<div id="login-page" class="hidden">
-  <img src="./logo.png" class="login-logo-sm" alt="All Things Camp" />
-  <div class="login-card">
-    <div class="auth-error" id="auth-error"></div>
-    <button class="btn-primary" id="btn-google-signin" style="display:flex;align-items:center;justify-content:center;gap:10px">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.2-2.7-.5-4z"/></svg>
-      Continue with Google
-    </button>
-  </div>
 </div>
 
 <!-- ── App shell ──────────────────────────────────────────── -->
@@ -704,30 +680,18 @@ document.querySelectorAll('.tab-item').forEach(btn =>
 );
 
 // ── Splash screen ─────────────────────────────────────────────
-// Show splash first, wait for Continue tap, then check auth state
-let authResolved = false;
-let splashDismissed = false;
-let pendingAuthState = undefined; // undefined = not yet resolved, null = resolved with no session
-
-document.getElementById('btn-splash-continue').addEventListener('click', () => {
-  document.getElementById('splash-page').classList.add('hidden');
-  splashDismissed = true;
-  // If auth already resolved while splash was showing, apply it now
-  if (pendingAuthState !== undefined) applyAuthState(pendingAuthState);
-});
-
 function applyAuthState(session) {
   document.getElementById('loading-overlay').classList.add('hidden');
   if (session?.user) {
     currentUser = session.user;
     fetchProfile().then(() => {
-      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('splash-page').classList.add('hidden');
       document.getElementById('app').style.display = 'flex';
       onLoggedIn();
     });
   } else {
     currentUser = currentProfile = null;
-    document.getElementById('login-page').classList.remove('hidden');
+    document.getElementById('splash-page').classList.remove('hidden');
     document.getElementById('app').style.display = 'none';
     cleanupChannels();
   }
@@ -741,12 +705,6 @@ function applyAuthState(session) {
 // to log in again (auth state persistence built-in).
 // ============================================================
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (!splashDismissed) {
-    // Splash still showing — buffer the result (session may be null = not logged in)
-    pendingAuthState = session === null ? null : session;
-    document.getElementById('loading-overlay').classList.add('hidden');
-    return;
-  }
   applyAuthState(session);
 });
 
@@ -760,7 +718,7 @@ async function fetchProfile() {
 document.getElementById('btn-google-signin').addEventListener('click', async () => {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: 'https://ms4x4.github.io/all-things-camp/' }
   });
   if (error) document.getElementById('auth-error').textContent = error.message;
 });
