@@ -1295,13 +1295,14 @@ async function loadRatings(pinId) {
 // sw.js must sit in the same directory as this HTML file.
 // It caches the app shell and OSM tiles for offline use.
 // ============================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(r  => console.log('[ATC] SW registered:', r.scope))
-      .catch(e => console.warn('[ATC] SW failed:', e));
-  });
-}
+//if ('serviceWorker' in navigator) {
+//  window.addEventListener('load', () => {
+//    navigator.serviceWorker.register('./sw.js')
+//     .then(r  => console.log('[ATC] SW registered:', r.scope))
+//      .catch(e => console.warn('[ATC] SW failed:', e));
+//  });
+//}
+
 </script>
 </body>
 </html>
