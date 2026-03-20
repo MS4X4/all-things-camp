@@ -24,22 +24,28 @@
   <style>
     /* ── Theme variables ─────────────────────────────────── */
     :root {
-      --bg:#FDF5E6; --bg-card:#FFFBF2; --bg-surface:#F5E6C8;
-      --border:#D4A96A; --text:#2C1810; --text-muted:#7A5C3A;
-      --accent:#C8620A; --accent-light:#E8820C; --accent-warm:#4A9B2F;
-      --tab-bg:#F0D9AA; --shadow:rgba(44,24,16,0.15);
+      --bg:#FDF5E6; --bg-card:#FFFBF2; --bg-surface:#EDF7D8;
+      --border:#9ACA5A; --text:#1A3A08; --text-muted:#4A6A28;
+      --accent:#5AB828; --accent-light:#8ED430; --accent-dark:#2D7A10;
+      --accent-warm:#C8620A;
+      --tab-bg:#DFF0B0; --shadow:rgba(26,58,8,0.15);
       --danger:#b83232; --star:#E8820C; --input-bg:#FFFBF2;
-      --overlay:rgba(27,58,107,0.6);
+      --overlay:rgba(27,58,107,0.62);
       --wood:#8B4513; --forest:#2D7A1F; --sky:#1B3A6B;
+      --camp-grad:linear-gradient(180deg,#C8F050 0%,#6DC230 48%,#2D7A10 100%);
+      --camp-grad-h:linear-gradient(135deg,#C8F050 0%,#6DC230 48%,#2D7A10 100%);
     }
     [data-theme="dark"] {
       --bg:#0F1E0A; --bg-card:#162010; --bg-surface:#1E2E14;
-      --border:#3A5A20; --text:#F5E6C8; --text-muted:#A89070;
-      --accent:#E8820C; --accent-light:#F5A623; --accent-warm:#5AB830;
+      --border:#3A6A20; --text:#E8F5C8; --text-muted:#90A870;
+      --accent:#6DC230; --accent-light:#9ADF48; --accent-dark:#3A8C1A;
+      --accent-warm:#E8820C;
       --tab-bg:#162010; --shadow:rgba(0,0,0,0.5);
       --danger:#e05050; --star:#F5A623; --input-bg:#162010;
       --overlay:rgba(10,14,8,0.75);
       --wood:#A0632A; --forest:#4A9B2F; --sky:#2A5A9B;
+      --camp-grad:linear-gradient(180deg,#9ADF48 0%,#6DC230 48%,#2D7A10 100%);
+      --camp-grad-h:linear-gradient(135deg,#9ADF48 0%,#6DC230 48%,#2D7A10 100%);
     }
 
     /* ── Reset & base ────────────────────────────────────── */
@@ -53,12 +59,14 @@
       box-shadow:0 0 60px var(--shadow)}
 
     /* ── Header ──────────────────────────────────────────── */
-    .app-header{flex-shrink:0;background:var(--accent);color:#fff;
+    .app-header{flex-shrink:0;background:var(--camp-grad);color:#fff;
       padding:14px 16px 10px;display:flex;align-items:center;
-      justify-content:space-between;min-height:56px;position:relative;z-index:10}
+      justify-content:space-between;min-height:56px;position:relative;z-index:10;
+      border-bottom:2px solid #1A5A08;
+      text-shadow:0 1px 3px rgba(0,0,0,0.35)}
     .app-header h1{font-family:'Playfair Display',serif;font-size:1.3rem;
       font-weight:900;letter-spacing:.01em;line-height:1}
-    .app-header .subtitle{font-size:.65rem;opacity:.75;letter-spacing:.12em;
+    .app-header .subtitle{font-size:.65rem;opacity:.85;letter-spacing:.12em;
       text-transform:uppercase;margin-top:2px}
 
     /* ── Pages ───────────────────────────────────────────── */
@@ -76,7 +84,8 @@
       font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
       gap:4px;transition:color .2s}
     .tab-item .ti{font-size:1.4rem}
-    .tab-item.active{color:var(--accent)}
+    .tab-item.active{color:var(--accent-dark);font-weight:700}
+    .tab-item.active .ti{filter:drop-shadow(0 0 3px rgba(110,210,48,.5))}
 
     /* ── Splash screen ───────────────────────────────────── */
     #splash-page{position:fixed;inset:0;background:linear-gradient(180deg,#1B3A6B 0%,#0F2544 60%,#2C1810 100%);
@@ -87,13 +96,13 @@
       animation:logoIn .7s cubic-bezier(.34,1.4,.64,1) both}
     @keyframes logoIn{from{transform:scale(.7) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
     .splash-continue{margin-top:32px;padding:16px 52px;
-      background:linear-gradient(135deg,#C8620A,#E8820C);
+      background:var(--camp-grad-h,linear-gradient(135deg,#C8F050,#6DC230,#2D7A10));
       color:#fff;border:none;border-radius:30px;font-family:'Cabin',sans-serif;font-weight:700;
       font-size:1.1rem;letter-spacing:.06em;cursor:pointer;
-      box-shadow:0 4px 20px rgba(200,98,10,.5);
+      box-shadow:0 4px 20px rgba(45,122,16,.5);text-shadow:0 1px 3px rgba(0,0,0,.3);
       animation:btnIn .5s .4s cubic-bezier(.34,1.4,.64,1) both;
       transition:transform .15s,box-shadow .15s}
-    .splash-continue:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(200,98,10,.6)}
+    .splash-continue:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(45,122,16,.6)}
     .splash-continue:active{transform:scale(.97)}
     @keyframes btnIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .splash-tagline{color:rgba(255,255,255,.5);font-size:.72rem;letter-spacing:.18em;
@@ -110,10 +119,11 @@
     .login-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
       border-radius:20px;padding:28px 24px;width:100%;max-width:340px;
       display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
-    .btn-primary{background:linear-gradient(135deg,#C8620A,#E8820C);color:#fff;border:none;
-      border-radius:12px;padding:14px 20px;font-family:'Cabin',sans-serif;font-weight:700;
-      font-size:1rem;cursor:pointer;width:100%;transition:opacity .2s,transform .15s;
-      box-shadow:0 3px 12px rgba(200,98,10,.4)}
+    .btn-primary{background:var(--camp-grad-h,linear-gradient(135deg,#C8F050,#6DC230,#2D7A10));
+      color:#fff;border:none;border-radius:12px;padding:14px 20px;
+      font-family:'Cabin',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;
+      width:100%;transition:opacity .2s,transform .15s;
+      box-shadow:0 3px 12px rgba(45,122,16,.4);text-shadow:0 1px 2px rgba(0,0,0,.25)}
     .btn-primary:hover{opacity:.92;transform:translateY(-1px)}
     .auth-error{color:#ffcccc;font-size:.82rem;text-align:center;min-height:1.2em}
 
@@ -122,17 +132,18 @@
       padding:10px 16px;display:flex;align-items:center;justify-content:space-between;
       flex-shrink:0;position:sticky;top:0;z-index:5}
     .section-bar h2{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700}
-    .pill-btn{background:var(--accent);color:#fff;border:none;border-radius:20px;
+    .pill-btn{background:var(--camp-grad-h);color:#fff;border:none;border-radius:20px;
       padding:6px 14px;font-family:'Cabin',sans-serif;font-size:.78rem;font-weight:700;
-      cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .2s}
-    .pill-btn:hover{background:var(--accent-light)}
-    .pill-btn.danger{background:var(--danger)}
+      cursor:pointer;display:flex;align-items:center;gap:4px;transition:opacity .2s,transform .15s;
+      text-shadow:0 1px 2px rgba(0,0,0,0.25);box-shadow:0 2px 8px rgba(45,122,16,.3)}
+    .pill-btn:hover{opacity:.9;transform:translateY(-1px)}
+    .pill-btn.danger{background:var(--danger);box-shadow:none;text-shadow:none}
     .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;
       justify-content:center;gap:10px;padding:40px 24px;text-align:center;color:var(--text-muted)}
     .empty-state .empty-icon{font-size:3rem}
     .empty-state p{font-size:.88rem;line-height:1.5}
-    .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:20px;
-      padding:2px 10px;font-size:.72rem;font-weight:700}
+    .badge{display:inline-block;background:var(--camp-grad-h);color:#fff;border-radius:20px;
+      padding:2px 10px;font-size:.72rem;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.2)}
     .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
     .form-group label{font-size:.78rem;font-weight:700;color:var(--text-muted);
       text-transform:uppercase;letter-spacing:.07em}
@@ -161,7 +172,8 @@
       font-family:'Cabin',sans-serif;font-weight:700;font-size:.92rem;
       cursor:pointer;transition:opacity .2s}
     .btn-action:hover{opacity:.85}
-    .btn-action.primary{background:var(--accent);color:#fff}
+    .btn-action.primary{background:var(--camp-grad-h);color:#fff;
+      text-shadow:0 1px 2px rgba(0,0,0,.25);box-shadow:0 2px 10px rgba(45,122,16,.3)}
     .btn-action.cancel{background:var(--bg-surface);color:var(--text)}
 
     /* ── Group cards ─────────────────────────────────────── */
@@ -169,8 +181,9 @@
       border-radius:14px;margin:0 16px 10px;overflow:hidden}
     .group-card-header{padding:14px 16px;display:flex;align-items:center;
       gap:12px;cursor:pointer}
-    .group-avatar{width:44px;height:44px;border-radius:12px;background:var(--accent);
-      display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+    .group-avatar{width:44px;height:44px;border-radius:12px;background:var(--camp-grad);
+      display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;
+      box-shadow:0 2px 8px rgba(45,122,16,.3)}
     .group-name{font-weight:700;font-size:.98rem}
     .group-meta{font-size:.78rem;color:var(--text-muted);margin-top:2px}
     .group-chevron{font-size:1rem;color:var(--text-muted);transition:transform .25s;margin-left:auto}
@@ -186,8 +199,9 @@
     .invite-accept-row{background:var(--bg-surface);border-radius:10px;padding:10px 12px;
       display:flex;align-items:center;gap:10px;font-size:.85rem;margin-bottom:8px}
     .invite-accept-row .accept-name{flex:1;font-weight:600}
-    .accept-btn{padding:5px 14px;background:var(--accent);color:#fff;border:none;
-      border-radius:8px;font-family:'Cabin',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer}
+    .accept-btn{padding:5px 14px;background:var(--camp-grad-h);color:#fff;border:none;
+      border-radius:8px;font-family:'Cabin',sans-serif;font-size:.78rem;font-weight:700;
+      cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.2)}
     .decline-btn{padding:5px 14px;background:transparent;color:var(--danger);
       border:1px solid var(--danger);border-radius:8px;font-family:'Cabin',sans-serif;
       font-size:.78rem;font-weight:700;cursor:pointer}
@@ -232,7 +246,7 @@
       font-weight:700;color:var(--text-muted);border:none;background:none;
       cursor:pointer;border-bottom:2px solid transparent;
       transition:color .2s,border-color .2s;font-family:'Cabin',sans-serif;letter-spacing:.04em}
-    .pin-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .pin-tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
     .pin-tab-panel{display:none}
     .pin-tab-panel.active{display:block}
 
@@ -241,8 +255,8 @@
       flex-direction:column;gap:10px;margin-bottom:12px}
     .chat-bubble{padding:9px 12px;border-radius:12px;font-size:.85rem;
       max-width:88%;line-height:1.4}
-    .chat-bubble.mine{background:var(--accent);color:#fff;align-self:flex-end;
-      border-bottom-right-radius:4px}
+    .chat-bubble.mine{background:var(--camp-grad-h);color:#fff;align-self:flex-end;
+      border-bottom-right-radius:4px;text-shadow:0 1px 2px rgba(0,0,0,.2)}
     .chat-bubble.theirs{background:var(--bg-surface);color:var(--text);
       align-self:flex-start;border-bottom-left-radius:4px}
     .chat-bubble .bubble-author{font-size:.72rem;font-weight:700;margin-bottom:3px;opacity:.75}
@@ -251,7 +265,7 @@
       border-radius:10px;padding:10px 12px;font-family:'Cabin',sans-serif;
       font-size:.88rem;color:var(--text)}
     .chat-input-row input:focus{outline:none;border-color:var(--accent)}
-    .chat-send-btn{background:var(--accent);border:none;border-radius:10px;
+    .chat-send-btn{background:var(--camp-grad-h);border:none;border-radius:10px;
       width:40px;color:#fff;cursor:pointer;font-size:1.1rem}
 
     /* ── Ratings ─────────────────────────────────────────── */
@@ -261,12 +275,13 @@
     .rating-star.active,.rating-star:hover{color:var(--star);transform:scale(1.15)}
     .rating-summary{background:var(--bg-surface);border-radius:12px;
       padding:12px;font-size:.85rem;display:flex;flex-direction:column;gap:4px}
-    .rating-avg{font-size:1.4rem;font-weight:700;color:var(--star)}
+    .rating-avg{font-size:1.4rem;font-weight:700;color:var(--accent)}
 
     /* ── Settings page ───────────────────────────────────── */
-    .profile-banner{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-light) 100%);
+    .profile-banner{background:var(--camp-grad);
       margin:16px;border-radius:16px;padding:20px;display:flex;align-items:center;
-      gap:14px;color:#fff}
+      gap:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);
+      box-shadow:0 4px 16px rgba(45,122,16,.3)}
     .profile-avatar-large{width:54px;height:54px;border-radius:16px;
       background:rgba(255,255,255,.2);display:flex;align-items:center;
       justify-content:center;font-size:1.8rem;flex-shrink:0}
@@ -479,13 +494,41 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">📨 Invite Member</div>
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="invite-email" placeholder="friend@email.com" />
+
+    <!-- Step 1: email entry -->
+    <div id="invite-step-1">
+      <div class="form-group">
+        <label>Their Email Address</label>
+        <input type="email" id="invite-email" placeholder="friend@email.com" />
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">
+          This links the invite to their account when they sign in.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-action cancel" onclick="closeModal('modal-invite')">Cancel</button>
+        <button class="btn-action primary" id="btn-send-invite">Send Invite</button>
+      </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-action cancel" onclick="closeModal('modal-invite')">Cancel</button>
-      <button class="btn-action primary" id="btn-send-invite">Send Invite</button>
+
+    <!-- Step 2: share via WhatsApp -->
+    <div id="invite-step-2" style="display:none;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:6px">Invite recorded!</div>
+      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:20px;line-height:1.5">
+        Now let them know via WhatsApp so they can open the app and accept.
+      </div>
+      <button id="btn-whatsapp-share" style="
+        display:flex;align-items:center;justify-content:center;gap:10px;
+        width:100%;padding:14px;border:none;border-radius:14px;
+        background:#25D366;color:#fff;font-family:'Cabin',sans-serif;
+        font-weight:700;font-size:1rem;cursor:pointer;
+        box-shadow:0 3px 12px rgba(37,211,102,.4);margin-bottom:12px">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="#fff">
+          <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.668 4.61 1.832 6.5L4 29l7.75-1.812A11.94 11.94 0 0016 28c6.627 0 12-5.373 12-12S22.627 3 16 3zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.94 9.94 0 01-5.02-1.352l-.36-.213-4.6 1.076 1.1-4.47-.236-.373A9.953 9.953 0 016 15c0-5.523 4.477-10 10-10zm-3.938 5.5c-.2 0-.524.075-.8.375-.275.3-1.05 1.025-1.05 2.5s1.075 2.9 1.225 3.1c.15.2 2.1 3.2 5.125 4.35 2.525.975 3.025.8 3.575.75.55-.05 1.775-.725 2.025-1.425.25-.7.25-1.3.175-1.425-.075-.125-.275-.2-.575-.35-.3-.15-1.775-.875-2.05-.975-.275-.1-.475-.15-.675.15-.2.3-.775.975-.95 1.175-.175.2-.35.225-.65.075-.3-.15-1.265-.466-2.41-1.485-.89-.793-1.49-1.77-1.665-2.07-.175-.3-.018-.462.132-.61.134-.134.3-.35.45-.525.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.525-.075-.15-.675-1.625-.925-2.225-.243-.585-.49-.505-.675-.514l-.575-.01z"/>
+        </svg>
+        Share via WhatsApp
+      </button>
+      <button class="btn-action cancel" style="width:100%" onclick="closeModal('modal-invite');resetInviteModal()">Done</button>
     </div>
   </div>
 </div>
@@ -586,8 +629,8 @@
 //     supabase.com → Project Settings → API
 //     Free tier: no credit card required, not Google.
 // ============================================================
-const SUPABASE_URL = 'https://vfidmdmqlgskfygxwmtj.supabase.co';       // e.g. https://abcxyz.supabase.co
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmaWRtZG1xbGdza2Z5Z3h3bXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzEwMDEsImV4cCI6MjA4OTUwNzAwMX0.eddfe8obhGjLT3eB2r0n_AtGJtFKBzKIFyzfLQUX2pg';  // public anon key
+const SUPABASE_URL = 'https://vfidmdmqlgskfygxwmtj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmaWRtZG1xbGdza2Z5Z3h3bXRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzEwMDEsImV4cCI6MjA4OTUwNzAwMX0.eddfe8obhGjLT3eB2r0n_AtGJtFKBzKIFyzfLQUX2pg';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -869,6 +912,7 @@ function renderGroups(groups) {
       e.stopPropagation();
       inviteGroupId = g.id;
       document.getElementById('invite-email').value = '';
+      resetInviteModal();
       openModal('modal-invite');
     });
 
@@ -950,6 +994,12 @@ function renderInvites(invites) {
   });
 }
 
+function resetInviteModal() {
+  document.getElementById('invite-step-1').style.display = 'block';
+  document.getElementById('invite-step-2').style.display = 'none';
+  document.getElementById('invite-email').value = '';
+}
+
 document.getElementById('btn-send-invite').addEventListener('click', async () => {
   const email = document.getElementById('invite-email').value.trim().toLowerCase();
   if (!email || !inviteGroupId) return;
@@ -959,16 +1009,31 @@ document.getElementById('btn-send-invite').addEventListener('click', async () =>
   if (exists) return showToast('An invite was already sent to that email.');
 
   const { data: grp } = await sb.from('groups').select('name').eq('id', inviteGroupId).single();
+  const groupName = grp?.name || 'our group';
+  const senderName = currentProfile?.display_name || currentUser.email;
+
   await sb.from('invites').insert({
     group_id:   inviteGroupId,
-    group_name: grp?.name||'Group',
+    group_name: groupName,
     from_id:    currentUser.id,
-    from_name:  currentProfile?.display_name||currentUser.email,
+    from_name:  senderName,
     to_email:   email,
     status:     'pending'
   });
-  closeModal('modal-invite');
-  showToast(`Invite sent to ${email}! 📨`);
+
+  // Build WhatsApp message
+  const appUrl = 'https://ms4x4.github.io/all-things-camp/';
+  const msg = `Hey! ${senderName} invited you to join "${groupName}" on All Things Camp 🏕️\n\nOpen the app, sign in with your Google account (${email}) and you'll see the invite waiting for you:\n${appUrl}`;
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+  // Wire up the WhatsApp button
+  document.getElementById('btn-whatsapp-share').onclick = () => {
+    window.open(waUrl, '_blank');
+  };
+
+  // Show step 2
+  document.getElementById('invite-step-1').style.display = 'none';
+  document.getElementById('invite-step-2').style.display = 'block';
 });
 
 // ============================================================
