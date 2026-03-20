@@ -336,8 +336,8 @@
 <div id="app" style="display:none">
 
   <header class="app-header">
-    <div style="display:flex;align-items:center;gap:10px">
-      <img src="./logo.png" style="width:36px;height:36px;object-fit:contain;border-radius:8px" alt="" />
+    <div style="display:flex;align-items:center;gap:10px;flex:1">
+      <span style="font-size:2rem;line-height:1">⛺</span>
       <div>
         <h1>All Things Camp</h1>
         <div class="subtitle" id="header-subtitle">Fireside Friends</div>
@@ -362,9 +362,9 @@
       <div class="map-header">
         <div class="group-select-wrap">
           <span>🏕</span>
-          <select id="map-group-select"><option value="">— No Group Selected —</option></select>
+          <select id="map-group-select"><option value="">Please select a group</option></select>
         </div>
-        <button class="map-search-btn" id="map-search-toggle">🔍</button>
+        <button class="map-search-btn" id="map-search-toggle" style="display:none">🔍</button>
       </div>
       <div class="map-search-panel" id="map-search-panel">
         <input type="text" id="map-search-input" placeholder="Search for a location…" autocomplete="off" />
@@ -469,7 +469,7 @@
     <div class="modal-handle"></div>
     <div class="modal-title" style="text-align:left">📨 Invite to Group</div>
     <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:20px;line-height:1.6;text-align:left">
-      Share the invite link below. When your friend opens it and signs in with Google they'll join automatically — no email address needed.
+      Share the invite link below. When your friend opens it and signs in with Google they'll join automatically.
     </div>
     <div id="invite-link-box" style="
       background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;
@@ -1031,7 +1031,11 @@ function initMap() {
   if (last) {
     const sel = document.getElementById('map-group-select');
     sel.value = last;
-    if (sel.value === last) { selectedGroupId = last; subscribePins(last); }
+    if (sel.value === last) {
+      selectedGroupId = last;
+      subscribePins(last);
+      document.getElementById('map-search-toggle').style.display = 'flex';
+    }
   }
 }
 
@@ -1049,7 +1053,7 @@ function onMapClick(lat, lng) {
 function populateMapGroupSelect(groups) {
   const sel = document.getElementById('map-group-select');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">— No Group Selected —</option>';
+  sel.innerHTML = '<option value="">Please select a group</option>';
   groups.forEach(g => {
     const o = document.createElement('option');
     o.value=g.id; o.textContent=g.name; sel.appendChild(o);
@@ -1062,6 +1066,12 @@ document.getElementById('map-group-select').addEventListener('change', function(
   if (selectedGroupId) localStorage.setItem('atc-last-group', selectedGroupId);
   clearPins();
   if (selectedGroupId) subscribePins(selectedGroupId);
+
+  // Show/hide search button based on group selection
+  document.getElementById('map-search-toggle').style.display = selectedGroupId ? 'flex' : 'none';
+
+  // Close search panel if open and group deselected
+  if (!selectedGroupId) document.getElementById('map-search-panel').classList.remove('open');
 });
 
 function clearPins() {
