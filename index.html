@@ -143,7 +143,7 @@
       outline:none;border-color:var(--accent)}
 
     /* ── Bottom sheet modal ──────────────────────────────── */
-    .modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:500;
+    .modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:10000;
       display:flex;align-items:flex-end;justify-content:center;
       opacity:0;pointer-events:none;transition:opacity .25s}
     .modal-overlay.open{opacity:1;pointer-events:all}
@@ -300,13 +300,13 @@
     .spinner{width:22px;height:22px;border:3px solid var(--border);
       border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:999;
+    .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:20000;
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
     .loading-overlay.hidden{display:none}
     #toast{position:fixed;bottom:80px;left:50%;
       transform:translateX(-50%) translateY(20px);background:#1c1c14;color:#fff;
       padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;
-      z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+      z-index:20001;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
       white-space:nowrap;max-width:calc(100% - 40px);text-align:center}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
     .divider{height:1px;background:var(--border);margin:8px 0}
