@@ -80,12 +80,15 @@ self.addEventListener('fetch', event => {
 
 // ── Stale-while-revalidate (app shell) ───────────────────────
 async function staleWhileRevalidate(req) {
-  const cache   = await caches.open(CACHE_APP);
-  const cached  = await cache.match(req);
-  const network = fetch(req).then(res => {
-    if (res && res.status === 200) cache.put(req, res.clone());
-    return res;
-  }).catch(() => cached);
+  if (!req.url.startsWith("http")) return fetch(req);
+  const cache = await caches.open(CACHE_APP);
+  const cached = await cache.match(req);
+  const network = fetch(req)
+    .then((res) => {
+      if (res && res.status === 200) cache.put(req, res.clone());
+      return res;
+    })
+    .catch(() => cached);
   return cached || network;
 }
 
