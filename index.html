@@ -535,8 +535,7 @@
         <select id="pin-status">
           <option value="Maybe">Maybe</option>
           <option value="Planned">Planned</option>
-          <option value="Booked">Booked</option>
-          <option value="Paid">Paid</option>
+          <option value="Reserved">Reserved</option>
           <option value="Been There">Been There</option>
         </select>
       </div>
@@ -1099,7 +1098,7 @@ async function loadPins(groupId) {
 }
 
 const STATUS_COLORS = {
-  'Maybe':'#888','Planned':'#3b7bc4','Booked':'#9b59b6','Paid':'#27ae60','Been There':'#d4a017'
+  'Maybe':'#888','Planned':'#3b7bc4','Reserved':'#27ae60','Been There':'#d4a017'
 };
 
 function addMarker(pinId, pin) {
@@ -1207,9 +1206,19 @@ async function openPinModal(pinId, lat, lng, pre={}) {
 }
 
 function refreshRatingVis(status, pinId) {
-  const open = status==='Been There' && pinId;
-  document.getElementById('rating-locked-msg').style.display  = open?'none':'block';
-  document.getElementById('rating-content').style.display     = open?'block':'none';
+  const isBeen = status === 'Been There';
+  const open   = isBeen && pinId;
+
+  // Hide/show the rating tab button itself
+  document.querySelector('.pin-tab-btn[data-pintab="rating"]').style.display =
+    isBeen ? 'flex' : 'none';
+
+  // If rating tab is active but status changed away from Been There, switch to Info
+  const ratingPanelActive = document.getElementById('pintab-rating').classList.contains('active');
+  if (!isBeen && ratingPanelActive) activatePinTab('info');
+
+  document.getElementById('rating-locked-msg').style.display  = open ? 'none' : 'block';
+  document.getElementById('rating-content').style.display     = open ? 'block' : 'none';
   if (open) loadRatings(pinId);
 }
 
