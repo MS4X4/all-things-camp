@@ -511,6 +511,12 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="pin-modal-title">📍 Location</div>
+    <div id="pin-campmaster-display" style="
+      font-size:.82rem;color:var(--text-muted);
+      margin:-14px 0 16px;line-height:1.5">
+      Your Campmaster for this trip is:
+      <span id="pin-campmaster-name" style="font-weight:700;color:var(--text)"></span>
+    </div>
     <div class="pin-modal-tabs">
       <button class="pin-tab-btn active" data-pintab="info">Info</button>
       <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
@@ -522,10 +528,8 @@
         <label>Name <span style="color:var(--danger)">*</span></label>
         <input type="text" id="pin-name" placeholder="Name this spot" maxlength="60" />
       </div>
-      <div class="form-group">
-        <label>CampMaster</label>
-        <select id="pin-campmaster"></select>
-      </div>
+      <!-- Hidden campmaster select kept for save payload -->
+      <select id="pin-campmaster" style="display:none"></select>
       <div class="form-group">
         <label>Address</label>
         <input type="text" id="pin-address" placeholder="Auto-detected" readonly />
@@ -1220,7 +1224,7 @@ async function openPinModal(pinId, lat, lng, pre={}) {
   document.getElementById('pin-modal-title').textContent = pinId ? `📍 ${pre.name||'Pin'}` : '📍 New Pin';
   document.getElementById('btn-delete-pin').style.display = pinId ? 'flex' : 'none';
 
-  // Populate CampMaster dropdown
+  // Populate hidden CampMaster select and update the display name in the header
   const cm = document.getElementById('pin-campmaster');
   cm.innerHTML = '';
   if (selectedGroupId) {
@@ -1234,6 +1238,10 @@ async function openPinModal(pinId, lat, lng, pre={}) {
       cm.appendChild(o);
     });
   }
+  // Update the visible display name
+  const selectedOpt = cm.options[cm.selectedIndex];
+  document.getElementById('pin-campmaster-name').textContent =
+    selectedOpt ? selectedOpt.textContent : (currentProfile?.display_name || '—');
 
   if (!pre.address) reverseGeocode(lat,lng).then(a=>{ document.getElementById('pin-address').value=a; });
 
