@@ -5,12 +5,12 @@
   "start_url": "/all-things-camp/",
   "scope": "/all-things-camp/",
   "display": "standalone",
-  "background_color": "#1B3A6B",
-  "theme_color": "#C8620A",
+  "background_color": "#ffffff",
+  "theme_color": "#5AB828",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./logo.png",
+      "src": "./icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
