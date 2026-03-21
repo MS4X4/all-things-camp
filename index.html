@@ -245,7 +245,8 @@
     #pintab-chat.active{display:flex}
     .pin-campmaster-bar{font-size:.82rem;color:var(--text-muted);
       padding:10px 20px;background:var(--bg-surface);
-      border-bottom:1px solid var(--border);line-height:1.5;flex-shrink:0}
+      border-bottom:1px solid var(--border);line-height:1.5;flex-shrink:0;
+      text-align:center}
     .pin-page-tabs{display:flex;border-bottom:1px solid var(--border);
       background:var(--bg-card);flex-shrink:0}
     .pin-tab-btn{flex:1;padding:12px 4px;text-align:center;font-size:.82rem;
@@ -277,7 +278,7 @@
       width:40px;color:#fff;cursor:pointer;font-size:1.1rem}
 
     /* ── Ratings ─────────────────────────────────────────── */
-    .rating-stars{display:flex;gap:8px;margin:12px 0}
+    .rating-stars{display:flex;gap:8px;margin:12px 0;justify-content:center}
     .rating-star{font-size:2rem;cursor:pointer;color:var(--border);
       transition:color .15s,transform .15s}
     .rating-star.active,.rating-star:hover{color:var(--star);transform:scale(1.15)}
@@ -359,7 +360,7 @@
 
   <header class="app-header">
     <div style="display:flex;align-items:center;gap:10px;flex:1">
-      <img src="./icon.png" style="width:40px;height:auto;object-fit:contain" alt="All Things Camp" />
+      <img src="./icon.png" style="width:56px;height:auto;object-fit:contain" alt="All Things Camp" />
       <div>
         <h1>All Things Camp</h1>
         <div class="subtitle" id="header-subtitle">Fireside Friends</div>
@@ -489,7 +490,7 @@
           </div>
         </div>
         <!-- Rating tab -->
-        <div class="pin-tab-panel" id="pintab-rating">
+        <div class="pin-tab-panel" id="pintab-rating" style="text-align:center">
           <div id="rating-locked-msg" style="color:var(--text-muted);font-size:.88rem;margin-bottom:12px">
             Ratings are only available once status is "Been There".
           </div>
