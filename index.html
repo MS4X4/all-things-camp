@@ -225,17 +225,33 @@
     .search-result-item strong{display:block;font-size:.92rem}
     .search-result-item span{color:var(--text-muted);font-size:.78rem}
 
-    /* ── Pin modal tabs ──────────────────────────────────── */
-    .pin-modal-tabs{display:flex;border-bottom:1px solid var(--border);
-      margin:0 -20px 16px;padding:0 20px}
-    .pin-tab-btn{flex:1;padding:10px 4px;text-align:center;font-size:.82rem;
+    /* ── Pin page ─────────────────────────────────────────── */
+    #page-pin{background:var(--bg);display:none;flex-direction:column;
+      position:absolute;inset:0;z-index:200;
+      transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+    #page-pin.active{display:flex;transform:translateX(0)}
+    .pin-page-header{flex-shrink:0;background:var(--camp-grad);color:#fff;
+      padding:14px 16px 10px;display:flex;align-items:center;gap:12px;
+      min-height:56px;border-bottom:2px solid #1A5A08}
+    .pin-back-btn{background:rgba(255,255,255,.2);border:none;color:#fff;
+      border-radius:10px;width:36px;height:36px;display:flex;align-items:center;
+      justify-content:center;font-size:1.2rem;cursor:pointer;flex-shrink:0}
+    .pin-page-title{font-family:'Playfair Display',serif;font-size:1.1rem;
+      font-weight:900;flex:1;line-height:1.2}
+    .pin-page-subtitle{font-size:.72rem;opacity:.8;margin-top:2px;letter-spacing:.06em}
+    .pin-page-body{flex:1;overflow-y:auto;padding:16px 20px 32px}
+    .pin-campmaster-bar{font-size:.82rem;color:var(--text-muted);
+      padding:10px 20px;background:var(--bg-surface);
+      border-bottom:1px solid var(--border);line-height:1.5;flex-shrink:0}
+    .pin-page-tabs{display:flex;border-bottom:1px solid var(--border);
+      background:var(--bg-card);flex-shrink:0}
+    .pin-tab-btn{flex:1;padding:12px 4px;text-align:center;font-size:.82rem;
       font-weight:700;color:var(--text-muted);border:none;background:none;
-      cursor:pointer;border-bottom:2px solid transparent;
+      cursor:pointer;border-bottom:3px solid transparent;
       transition:color .2s,border-color .2s;font-family:'Cabin',sans-serif;letter-spacing:.04em}
     .pin-tab-btn.active{color:var(--accent-dark);border-bottom-color:var(--accent)}
-    .pin-tab-panel{visibility:hidden;position:absolute;width:100%;top:0;left:0;pointer-events:none}
-    .pin-tab-panel.active{visibility:visible;position:relative;pointer-events:all}
-    .pin-tabs-container{position:relative;min-height:var(--pin-info-height,320px)}
+    .pin-tab-panel{display:none}
+    .pin-tab-panel.active{display:block}
 
     /* ── Chat ────────────────────────────────────────────── */
     .chat-messages{max-height:220px;overflow-y:auto;display:flex;
@@ -426,6 +442,78 @@
       </div>
     </div>
 
+    <!-- Page 4: Pin Detail (slides in over map) -->
+    <div id="page-pin">
+      <div class="pin-page-header">
+        <button class="pin-back-btn" id="btn-pin-back">‹</button>
+        <div style="flex:1">
+          <div class="pin-page-title" id="pin-modal-title">📍 New Pin</div>
+        </div>
+      </div>
+      <div class="pin-campmaster-bar">
+        Your Campmaster for this trip is:
+        <span id="pin-campmaster-name" style="font-weight:700;color:var(--text)"></span>
+      </div>
+      <div class="pin-page-tabs">
+        <button class="pin-tab-btn active" data-pintab="info">Info</button>
+        <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
+        <button class="pin-tab-btn"        data-pintab="rating">Rating</button>
+      </div>
+      <div class="pin-page-body">
+        <!-- Info tab -->
+        <div class="pin-tab-panel active" id="pintab-info">
+          <div class="form-group">
+            <label>Name <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="pin-name" placeholder="Name this spot" maxlength="60" />
+          </div>
+          <select id="pin-campmaster" style="display:none"></select>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="pin-address" placeholder="Auto-detected" readonly />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="pin-status">
+              <option value="Maybe">Maybe</option>
+              <option value="Planned">Planned</option>
+              <option value="Reserved">Reserved</option>
+              <option value="Been There">Been There</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <button class="btn-action cancel" id="btn-delete-pin" style="background:var(--danger);color:#fff;flex:0 0 auto;padding:13px 18px">🗑</button>
+            <button class="btn-action primary" id="btn-save-pin" style="flex:1">Save Pin</button>
+          </div>
+        </div>
+        <!-- Chat tab -->
+        <div class="pin-tab-panel" id="pintab-chat">
+          <div class="chat-messages" id="pin-chat-messages"></div>
+          <div class="chat-input-row">
+            <input type="text" id="pin-chat-input" placeholder="Say something…" maxlength="300" />
+            <button class="chat-send-btn" id="pin-chat-send">➤</button>
+          </div>
+        </div>
+        <!-- Rating tab -->
+        <div class="pin-tab-panel" id="pintab-rating">
+          <div id="rating-locked-msg" style="color:var(--text-muted);font-size:.88rem;margin-bottom:12px">
+            Ratings are only available once status is "Been There".
+          </div>
+          <div id="rating-content" style="display:none">
+            <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:8px">Your Rating</div>
+            <div class="rating-stars" id="rating-stars-input">
+              <span class="rating-star" data-val="1">★</span>
+              <span class="rating-star" data-val="2">★</span>
+              <span class="rating-star" data-val="3">★</span>
+              <span class="rating-star" data-val="4">★</span>
+              <span class="rating-star" data-val="5">★</span>
+            </div>
+            <button class="btn-action primary" id="btn-submit-rating" style="margin-bottom:16px;width:100%">Submit Rating</button>
+            <div class="rating-summary" id="rating-summary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <nav class="tab-bar">
@@ -507,81 +595,6 @@
   </div>
 </div>
 
-<!-- Pin Detail -->
-<div class="modal-overlay" id="modal-pin">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="pin-modal-title">📍 Location</div>
-    <div id="pin-campmaster-display" style="
-      font-size:.82rem;color:var(--text-muted);
-      margin:-14px 0 16px;line-height:1.5">
-      Your Campmaster for this trip is:
-      <span id="pin-campmaster-name" style="font-weight:700;color:var(--text)"></span>
-    </div>
-    <div class="pin-modal-tabs">
-      <button class="pin-tab-btn active" data-pintab="info">Info</button>
-      <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
-      <button class="pin-tab-btn"        data-pintab="rating">Rating</button>
-    </div>
-    <!-- Tab panels container — sized to info tab so modal never resizes -->
-    <div class="pin-tabs-container" id="pin-tabs-container">
-    <!-- Info tab -->
-    <div class="pin-tab-panel active" id="pintab-info">
-      <div class="form-group">
-        <label>Name <span style="color:var(--danger)">*</span></label>
-        <input type="text" id="pin-name" placeholder="Name this spot" maxlength="60" inputmode="text" />
-      </div>
-      <!-- Hidden campmaster select kept for save payload -->
-      <select id="pin-campmaster" style="display:none"></select>
-      <div class="form-group">
-        <label>Address</label>
-        <input type="text" id="pin-address" placeholder="Auto-detected" readonly />
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select id="pin-status">
-          <option value="Maybe">Maybe</option>
-          <option value="Planned">Planned</option>
-          <option value="Reserved">Reserved</option>
-          <option value="Been There">Been There</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-action cancel" id="btn-delete-pin" style="background:var(--danger);color:#fff;flex:0 0 auto;padding:13px 18px">🗑</button>
-        <button class="btn-action cancel" onclick="closeModal('modal-pin')">Cancel</button>
-        <button class="btn-action primary" id="btn-save-pin">Save Pin</button>
-      </div>
-    </div>
-    <!-- Chat tab -->
-    <div class="pin-tab-panel" id="pintab-chat">
-      <div class="chat-messages" id="pin-chat-messages"></div>
-      <div class="chat-input-row">
-        <input type="text" id="pin-chat-input" placeholder="Say something…" maxlength="300" />
-        <button class="chat-send-btn" id="pin-chat-send">➤</button>
-      </div>
-    </div>
-    <!-- Rating tab -->
-    <div class="pin-tab-panel" id="pintab-rating">
-      <div id="rating-locked-msg" style="color:var(--text-muted);font-size:.88rem;margin-bottom:12px">
-        Ratings are only available once status is "Been There".
-      </div>
-      <div id="rating-content" style="display:none">
-        <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:8px">Your Rating</div>
-        <div class="rating-stars" id="rating-stars-input">
-          <span class="rating-star" data-val="1">★</span>
-          <span class="rating-star" data-val="2">★</span>
-          <span class="rating-star" data-val="3">★</span>
-          <span class="rating-star" data-val="4">★</span>
-          <span class="rating-star" data-val="5">★</span>
-        </div>
-        <button class="btn-action primary" id="btn-submit-rating" style="margin-bottom:16px">Submit Rating</button>
-        <div class="rating-summary" id="rating-summary"></div>
-      </div>
-    </div>
-    </div><!-- /pin-tabs-container -->
-  </div>
-</div>
-
 <!-- ── Scripts ────────────────────────────────────────────── -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -647,7 +660,6 @@ window.openModal = id => {
   if (document.activeElement) document.activeElement.blur();
   setTimeout(() => {
     const el = document.getElementById(id);
-    // Move modal to body to escape any stacking context (e.g. Leaflet map)
     if (el.parentNode !== document.body) document.body.appendChild(el);
     el.classList.add('open');
   }, 150);
@@ -656,9 +668,7 @@ window.openModal = id => {
 window.closeModal = id => {
   const el = document.getElementById(id);
   el.classList.remove('open');
-  // Force display:none immediately so it never blocks clicks
   el.style.display = 'none';
-  // Reset after a tick so next open() works cleanly
   setTimeout(() => { el.style.display = ''; }, 50);
 };
 
@@ -668,6 +678,22 @@ document.addEventListener('click', e => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
 });
+
+// ── Pin page open / close ─────────────────────────────────────
+function openPinPage() {
+  const page = document.getElementById('page-pin');
+  page.style.display = 'flex';
+  requestAnimationFrame(() => page.classList.add('active'));
+}
+
+function closePinPage() {
+  const page = document.getElementById('page-pin');
+  page.classList.remove('active');
+  setTimeout(() => { page.style.display = 'none'; }, 320);
+  if (chatChannel) { sb.removeChannel(chatChannel); chatChannel = null; }
+}
+
+document.getElementById('btn-pin-back').addEventListener('click', closePinPage);
 
 /** Escape HTML — prevents XSS when inserting user content */
 function esc(s) {
@@ -688,7 +714,13 @@ document.getElementById('theme-dark-btn').addEventListener('click',  () => apply
 
 // ── Page navigation ───────────────────────────────────────────
 function navigateTo(page) {
-  // Force close all modals so they never block other pages
+  // Close pin page if open
+  const pinPage = document.getElementById('page-pin');
+  if (pinPage.classList.contains('active')) {
+    pinPage.classList.remove('active');
+    setTimeout(() => { pinPage.style.display = 'none'; }, 320);
+  }
+  // Force close all other modals
   document.querySelectorAll('.modal-overlay').forEach(m => {
     m.classList.remove('open');
     m.style.display = 'none';
@@ -1309,14 +1341,7 @@ async function openPinModal(pinId, lat, lng, pre={}) {
   if (pinId) subscribeChat(pinId);
   else { document.getElementById('pin-chat-messages').innerHTML=''; if(chatChannel){sb.removeChannel(chatChannel);chatChannel=null;} }
 
-  openModal('modal-pin');
-
-  // Lock container height to info tab so modal never resizes on tab switch
-  requestAnimationFrame(() => {
-    const info = document.getElementById('pintab-info');
-    const container = document.getElementById('pin-tabs-container');
-    container.style.minHeight = info.offsetHeight + 'px';
-  });
+  openPinPage();
 }
 
 function refreshRatingVis(status, pinId) {
@@ -1370,14 +1395,14 @@ document.getElementById('btn-save-pin').addEventListener('click', async () => {
     await sb.from('pins').insert(payload);
     showToast('Pin saved! 📍');
   }
-  closeModal('modal-pin');
+  closePinPage();
 });
 
 // ── Delete pin ────────────────────────────────────────────────
 document.getElementById('btn-delete-pin').addEventListener('click', async () => {
   if (!currentPinId || !confirm('Delete this pin?')) return;
   await sb.from('pins').delete().eq('id', currentPinId);
-  closeModal('modal-pin');
+  closePinPage();
   showToast('Pin deleted.');
 });
 
