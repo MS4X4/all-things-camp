@@ -645,18 +645,23 @@ function showToast(msg) {
 }
 
 window.openModal = id => {
-  // Blur any focused element to dismiss keyboard first
   if (document.activeElement) document.activeElement.blur();
-  // Small delay lets the keyboard fully dismiss before modal animates in
   setTimeout(() => {
     const el = document.getElementById(id);
+    // Move modal to body to escape any stacking context (e.g. Leaflet map)
+    if (el.parentNode !== document.body) document.body.appendChild(el);
     el.classList.add('open');
-    // Scroll modal into view on mobile
-    const modal = el.querySelector('.modal');
-    if (modal) modal.scrollIntoView({ block:'end', behavior:'smooth' });
   }, 150);
 };
+
 window.closeModal = id => document.getElementById(id).classList.remove('open');
+
+// Close modal when clicking the overlay background (outside the modal sheet)
+document.addEventListener('click', e => {
+  document.querySelectorAll('.modal-overlay.open').forEach(overlay => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
 
 /** Escape HTML — prevents XSS when inserting user content */
 function esc(s) {
@@ -677,6 +682,9 @@ document.getElementById('theme-dark-btn').addEventListener('click',  () => apply
 
 // ── Page navigation ───────────────────────────────────────────
 function navigateTo(page) {
+  // Close any open modals when changing page
+  document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
