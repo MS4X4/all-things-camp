@@ -452,14 +452,14 @@
       <div class="pin-page-header">
         <button class="pin-back-btn" id="btn-pin-back">‹</button>
         <div style="flex:1">
-          <div class="pin-page-title" id="pin-modal-title">📍 New Pin</div>
+          <div class="pin-page-title" id="pin-page-title">📍 New Pin</div>
         </div>
       </div>
       <div class="pin-campmaster-bar">
         Your Campmaster for this trip is:
         <span id="pin-campmaster-name" style="font-weight:700;color:var(--text)"></span>
       </div>
-      <div class="pin-page-tabs">
+      <div class="pin-page-tabs" id="pin-page-tabs">
         <button class="pin-tab-btn active" data-pintab="info">Info</button>
         <button class="pin-tab-btn"        data-pintab="chat">Chat</button>
         <button class="pin-tab-btn"        data-pintab="rating">Rating</button>
@@ -486,10 +486,6 @@
               <option value="Reserved">Reserved</option>
               <option value="Been There">Been There</option>
             </select>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:8px">
-            <button class="btn-action cancel" id="btn-delete-pin" style="background:var(--danger);color:#fff;flex:0 0 auto;padding:13px 18px">🗑</button>
-            <button class="btn-action primary" id="btn-save-pin" style="flex:1">Save Pin</button>
           </div>
         </div>
         <!-- Rating tab -->
@@ -519,6 +515,16 @@
           <input type="text" id="pin-chat-input" placeholder="Say something…" maxlength="300" />
           <button class="chat-send-btn" id="pin-chat-send">➤</button>
         </div>
+      </div>
+
+      <!-- Save / Delete bar — always pinned to bottom of pin page -->
+      <div id="pin-action-bar" style="
+        display:flex;gap:10px;padding:12px 20px;
+        background:var(--bg-card);border-top:1px solid var(--border);
+        flex-shrink:0">
+        <button class="btn-action cancel" id="btn-delete-pin"
+          style="background:var(--danger);color:#fff;flex:0 0 auto;padding:13px 18px">🗑</button>
+        <button class="btn-action primary" id="btn-save-pin" style="flex:1">Save Pin</button>
       </div>
 
     </div>
@@ -689,10 +695,9 @@ document.addEventListener('click', e => {
 });
 
 // ── Pin page open / close ─────────────────────────────────────
-function openPinPage() {
+function showPinPage() {
   const page = document.getElementById('page-pin');
   page.style.display = 'flex';
-  // Hide map header so it doesn't show through
   document.querySelector('.map-header').style.display = 'none';
   document.getElementById('map-search-panel').classList.remove('open');
   requestAnimationFrame(() => page.classList.add('active'));
@@ -1156,7 +1161,7 @@ function onMapClick(lat, lng) {
       : 'Select a group above to add pins.');
     return;
   }
-  openPinModal(null, lat, lng);
+  openPinPage(null, lat, lng);
 }
 
 function populateMapGroupSelect(groups) {
@@ -1261,7 +1266,7 @@ function addMarker(pinId, pin) {
   const icon = makePinIcon(pin.status || 'Maybe');
   const m = L.marker([pin.lat, pin.lng], {icon}).addTo(leafletMap)
     .bindTooltip(pin.name||'Unnamed', {permanent:false, direction:'top'});
-  m.on('click', () => openPinModal(pinId, pin.lat, pin.lng, pin));
+  m.on('click', () => openPinPage(pinId, pin.lat, pin.lng, pin));
   pinMarkers[pinId] = m;
 }
 
@@ -1308,7 +1313,7 @@ async function nominatimSearch(q) {
         document.getElementById('map-search-panel').classList.remove('open');
         document.getElementById('map-search-input').value='';
         el.innerHTML='';
-        openPinModal(null,lat,lng,{address:item.display_name,name:parts[0]});
+        openPinPage(null,lat,lng,{address:item.display_name,name:parts[0]});
       });
       el.appendChild(div);
     });
@@ -1320,7 +1325,7 @@ async function nominatimSearch(q) {
 // ============================================================
 let _lat, _lng;
 
-async function openPinModal(pinId, lat, lng, pre={}) {
+async function openPinPage(pinId, lat, lng, pre={}) {
   currentPinId = pinId; _lat=lat; _lng=lng;
   activatePinTab('info');
 
@@ -1328,8 +1333,24 @@ async function openPinModal(pinId, lat, lng, pre={}) {
   document.getElementById('pin-status').value  = pre.status  || 'Maybe';
   document.getElementById('pin-address').value = pre.address || '';
   const titleEmoji = (PIN_STYLES[pre.status || 'Maybe'] || PIN_STYLES['Maybe']).emoji;
-  document.getElementById('pin-modal-title').textContent = pinId ? `${titleEmoji} ${pre.name||'Pin'}` : `${titleEmoji} New Pin`;
+  document.getElementById('pin-page-title').textContent = pinId ? `${titleEmoji} ${pre.name||'Pin'}` : `${titleEmoji} New Pin`;
   document.getElementById('btn-delete-pin').style.display = pinId ? 'flex' : 'none';
+
+  // Tab visibility rules:
+  // New pin  → Info only (no tabs bar)
+  // Existing → Info + Chat always; Rating only if "Been There"
+  const tabsBar   = document.getElementById('pin-page-tabs');
+  const chatBtn   = document.querySelector('.pin-tab-btn[data-pintab="chat"]');
+  const ratingBtn = document.querySelector('.pin-tab-btn[data-pintab="rating"]');
+
+  if (!pinId) {
+    // New pin — hide the entire tab bar
+    tabsBar.style.display = 'none';
+  } else {
+    tabsBar.style.display = 'flex';
+    chatBtn.style.display = 'flex';
+    // Rating tab controlled by refreshRatingVis below
+  }
 
   // Populate hidden CampMaster select and update the display name in the header
   const cm = document.getElementById('pin-campmaster');
@@ -1352,28 +1373,29 @@ async function openPinModal(pinId, lat, lng, pre={}) {
 
   if (!pre.address) reverseGeocode(lat,lng).then(a=>{ document.getElementById('pin-address').value=a; });
 
+  // Only show rating for existing pins
   refreshRatingVis(document.getElementById('pin-status').value, pinId);
 
   if (pinId) subscribeChat(pinId);
   else { document.getElementById('pin-chat-messages').innerHTML=''; if(chatChannel){sb.removeChannel(chatChannel);chatChannel=null;} }
 
-  openPinPage();
+  showPinPage();
 }
 
 function refreshRatingVis(status, pinId) {
   const isBeen = status === 'Been There';
-  const open   = isBeen && pinId;
+  const open   = isBeen && !!pinId;
 
-  // Hide/show the rating tab button itself
-  document.querySelector('.pin-tab-btn[data-pintab="rating"]').style.display =
-    isBeen ? 'flex' : 'none';
+  // Rating tab only shown for existing pins with "Been There" status
+  const ratingBtn = document.querySelector('.pin-tab-btn[data-pintab="rating"]');
+  if (ratingBtn) ratingBtn.style.display = open ? 'flex' : 'none';
 
-  // If rating tab is active but status changed away from Been There, switch to Info
+  // If rating tab is active but conditions no longer met, switch to info
   const ratingPanelActive = document.querySelector('.pin-tab-btn[data-pintab="rating"]')?.classList.contains('active');
-  if (!isBeen && ratingPanelActive) activatePinTab('info');
+  if (!open && ratingPanelActive) activatePinTab('info');
 
-  document.getElementById('rating-locked-msg').style.display  = open ? 'none' : 'block';
-  document.getElementById('rating-content').style.display     = open ? 'block' : 'none';
+  document.getElementById('rating-locked-msg').style.display = open ? 'none' : 'block';
+  document.getElementById('rating-content').style.display    = open ? 'block' : 'none';
   if (open) loadRatings(pinId);
 }
 
@@ -1381,7 +1403,7 @@ document.getElementById('pin-status').addEventListener('change', function(){
   refreshRatingVis(this.value, currentPinId);
   // Update the title emoji to match the new status
   const emoji = (PIN_STYLES[this.value] || PIN_STYLES['Maybe']).emoji;
-  const title = document.getElementById('pin-modal-title');
+  const title = document.getElementById('pin-page-title');
   const name  = title.textContent.split(' ').slice(1).join(' ');
   title.textContent = `${emoji} ${name}`;
 });
@@ -1431,18 +1453,18 @@ function activatePinTab(tab) {
   document.querySelectorAll('.pin-tab-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.pintab === tab));
 
-  // Info and rating live inside pin-page-body (scrollable)
-  // Chat lives outside it with its own flex layout
-  const body = document.getElementById('pin-page-body');
-  const chat = document.getElementById('pintab-chat');
+  const body    = document.getElementById('pin-page-body');
+  const chat    = document.getElementById('pintab-chat');
+  const actions = document.getElementById('pin-action-bar');
 
   if (tab === 'chat') {
-    body.style.display = 'none';
-    chat.style.display = 'flex';
+    body.style.display    = 'none';
+    chat.style.display    = 'flex';
+    actions.style.display = 'none';
   } else {
-    body.style.display = 'block';
-    chat.style.display = 'none';
-    // Show correct tab within body
+    body.style.display    = 'block';
+    chat.style.display    = 'none';
+    actions.style.display = tab === 'info' ? 'flex' : 'none';
     document.querySelectorAll('#pin-page-body .pin-tab-panel').forEach(p =>
       p.classList.toggle('active', p.id === `pintab-${tab}`)
     );
