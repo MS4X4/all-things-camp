@@ -94,7 +94,7 @@
     /* ── Splash screen ───────────────────────────────────── */
     #splash-page{position:fixed;inset:0;background:linear-gradient(180deg,#1B3A6B 0%,#0F2544 60%,#2C1810 100%);
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      z-index:1001;padding:0}
+      z-index:20002;padding:0}
     #splash-page.hidden{display:none}
     .splash-logo{width:min(82vw,340px);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5));
       animation:logoIn .7s cubic-bezier(.34,1.4,.64,1) both}
@@ -302,7 +302,7 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:20000;
       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-    .loading-overlay.hidden{display:none}
+    .loading-overlay.hidden{display:none;pointer-events:none}
     #toast{position:fixed;bottom:80px;left:50%;
       transform:translateX(-50%) translateY(20px);background:#1c1c14;color:#fff;
       padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;
@@ -587,8 +587,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script>
-// Prevent browser pinch-zoom on the whole app.
-// Leaflet handles its own pinch-to-zoom internally on #map-container.
+// Prevent browser pinch-zoom — only block multi-touch, never single taps
 document.addEventListener('touchstart', e => {
   if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
@@ -597,10 +596,10 @@ document.addEventListener('touchmove', e => {
   if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
-// Also block gesture events (Safari/older Android)
-document.addEventListener('gesturestart',  e => e.preventDefault(), { passive: false });
-document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
-document.addEventListener('gestureend',    e => e.preventDefault(), { passive: false });
+// Gesture events (Safari only) — these don't affect Android tap events
+document.addEventListener('gesturestart',  e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend',    e => e.preventDefault());
 
 // ============================================================
 // SUPABASE CONFIGURATION
@@ -763,6 +762,16 @@ async function fetchProfile() {
 // ── Toggle register / sign-in mode ────────────────────────────
 // Google sign-in
 document.getElementById('btn-google-signin').addEventListener('click', async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: 'https://ms4x4.github.io/all-things-camp/' }
+  });
+  if (error) document.getElementById('auth-error').textContent = error.message;
+});
+
+// Fallback for Android where click can be swallowed
+document.getElementById('btn-google-signin').addEventListener('touchend', async (e) => {
+  e.preventDefault();
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: 'https://ms4x4.github.io/all-things-camp/' }
